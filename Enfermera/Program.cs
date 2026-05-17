@@ -1,4 +1,4 @@
-namespace SIGEM
+namespace Enfermera
 {
     internal static class Program
     {
@@ -11,7 +11,7 @@ namespace SIGEM
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new Vista.LoginVista());
+            Application.Run(new Form1());
         }
     }
 }
