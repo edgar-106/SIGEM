@@ -6,6 +6,7 @@ namespace SIGEM.Vista;
 public partial class LoginVista : Form, ILoginVista
 {
     private readonly LoginPresentador presentador;
+    private bool mostrarContrasena;
 
     public LoginVista()
     {
@@ -45,5 +46,32 @@ public partial class LoginVista : Form, ILoginVista
             IniciarSesionSolicitado?.Invoke(this, EventArgs.Empty);
             e.SuppressKeyPress = true;
         }
+    }
+
+    private void BtnTogglePassword_Click(object? sender, EventArgs e)
+    {
+        mostrarContrasena = !mostrarContrasena;
+        txtContrasena.UseSystemPasswordChar = !mostrarContrasena;
+        btnTogglePassword.Text = mostrarContrasena ? "Ocultar" : "Mostrar";
+    }
+
+    private void TxtUsuario_Enter(object sender, EventArgs e)
+    {
+        pnlUsuarioBorder.BackColor = Color.FromArgb(37, 99, 235);
+    }
+
+    private void TxtUsuario_Leave(object sender, EventArgs e)
+    {
+        pnlUsuarioBorder.BackColor = Color.FromArgb(209, 213, 219);
+    }
+
+    private void TxtContrasena_Enter(object sender, EventArgs e)
+    {
+        pnlContrasenaBorder.BackColor = Color.FromArgb(37, 99, 235);
+    }
+
+    private void TxtContrasena_Leave(object sender, EventArgs e)
+    {
+        pnlContrasenaBorder.BackColor = Color.FromArgb(209, 213, 219);
     }
 }
