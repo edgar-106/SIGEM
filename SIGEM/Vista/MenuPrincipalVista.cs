@@ -102,7 +102,8 @@ public partial class MenuPrincipalVista : Form
 
         LimpiarContenido();
         SeleccionarBoton(btnAdministracion);
-        ConstruirAdministracion();
+        var adminControl = new AdministracionControl();
+        pnlContenido.Controls.Add(adminControl);
     }
 
     private void LimpiarContenido()
