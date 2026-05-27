@@ -31,7 +31,6 @@ partial class LoginVista
 
     private void InitializeComponent()
     {
-        Button btnIniciarSesion;
         pnlLateral = new Panel();
         lblDescripcion = new Label();
         lblSubtitulo = new Label();

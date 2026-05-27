@@ -26,6 +26,9 @@
     <Compile Update="Vista\MenuPrincipalVista.Designer.cs">
       <DependentUpon>MenuPrincipalVista.cs</DependentUpon>
     </Compile>
+    <Compile Update="Vista\AdministracionControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Update="Vista\SigemVista.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -41,6 +44,9 @@
     </EmbeddedResource>
     <EmbeddedResource Update="Vista\MenuPrincipalVista.resx">
       <DependentUpon>MenuPrincipalVista.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Vista\AdministracionControl.resx">
+      <DependentUpon>AdministracionControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Update="Vista\SigemVista.resx">
       <DependentUpon>SigemVista.cs</DependentUpon>

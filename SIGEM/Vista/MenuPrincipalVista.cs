@@ -287,6 +287,17 @@ public partial class MenuPrincipalVista : Form
         tarjeta.Controls.Add(CrearTexto(texto, 28, 86, 850, 80, 12F));
     }
 
+    private void ConstruirAdministracion()
+    {
+        AdministracionControl administracionControl = new()
+        {
+            Dock = DockStyle.Fill
+        };
+
+        pnlContenido.Controls.Add(administracionControl);
+        administracionControl.BringToFront();
+    }
+
     private static bool CoincidePaciente(Paciente paciente, string filtro)
     {
         if (string.IsNullOrWhiteSpace(filtro))
