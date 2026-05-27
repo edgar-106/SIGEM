@@ -9,6 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Update="Vista\LoginVista.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -21,17 +26,25 @@
     <Compile Update="Vista\MenuPrincipalVista.Designer.cs">
       <DependentUpon>MenuPrincipalVista.cs</DependentUpon>
     </Compile>
-    <Compile Update="Vista\SigemVista.cs">
-      <SubType>Form</SubType>
+    <Compile Update="Vista\AdministracionControl.cs">
+      <SubType>UserControl</SubType>
     </Compile>
+    <Compile Update="Vista\SigemVista.cs" />
     <Compile Update="Vista\SigemVista.Designer.cs">
       <DependentUpon>SigemVista.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Update="Vista\LoginVista.resx">
       <DependentUpon>LoginVista.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Update="Vista\MenuPrincipalVista.resx">
       <DependentUpon>MenuPrincipalVista.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Vista\AdministracionControl.resx">
+      <DependentUpon>AdministracionControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Update="Vista\SigemVista.resx">
       <DependentUpon>SigemVista.cs</DependentUpon>
