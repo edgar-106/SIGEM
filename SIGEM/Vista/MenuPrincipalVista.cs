@@ -57,9 +57,10 @@ public partial class MenuPrincipalVista : Form
 
     private void MostrarAdministracion()
     {
-        MostrarContenido("Administracion del Sistema", "Configuracion del sistema");
+        LimpiarContenido();
         SeleccionarBoton(btnAdministracion);
-        ConstruirMensajeSimple("Administracion del Sistema", "Las opciones administrativas se mostraran aqui.");
+        var adminControl = new AdministracionControl();
+        pnlContenido.Controls.Add(adminControl);
     }
 
     private void LimpiarContenido()
