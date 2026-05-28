@@ -19,6 +19,8 @@ partial class SigemVista
     private TextBox txtPacienteNombre;
     private Label lblPacienteApellido;
     private TextBox txtPacienteApellido;
+    private Label lblCurp;
+    private TextBox txtCurp;
     private Label lblFechaNac;
     private DateTimePicker dtpFechaNacimiento;
     private Label lblSexo;
@@ -88,6 +90,8 @@ partial class SigemVista
         lblPacienteNombre = new Label();
         txtPacienteApellido = new TextBox();
         lblPacienteApellido = new Label();
+        txtCurp = new TextBox();
+        lblCurp = new Label();
         dtpFechaNacimiento = new DateTimePicker();
         lblFechaNac = new Label();
         cmbSexo = new ComboBox();
@@ -165,15 +169,16 @@ partial class SigemVista
         lblExpediente.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
         lblExpediente.Location = new Point(24, 90);
         lblExpediente.Name = "lblExpediente";
-        lblExpediente.Size = new Size(113, 19);
-        lblExpediente.Text = "No. Expediente:";
+        lblExpediente.Size = new Size(150, 19);
+        lblExpediente.Text = "CURP / Expediente:";
 
         // txtExpediente
         txtExpediente.Font = new Font("Segoe UI", 10F);
-        txtExpediente.Location = new Point(143, 86);
+        txtExpediente.Location = new Point(170, 86);
         txtExpediente.Name = "txtExpediente";
-        txtExpediente.PlaceholderText = "Ingrese número de expediente";
-        txtExpediente.Size = new Size(200, 25);
+        txtExpediente.PlaceholderText = "Ingrese CURP o expediente";
+        txtExpediente.CharacterCasing = CharacterCasing.Upper;
+        txtExpediente.Size = new Size(220, 25);
         txtExpediente.TabIndex = 0;
         txtExpediente.KeyDown += TxtExpediente_KeyDown;
 
@@ -183,7 +188,7 @@ partial class SigemVista
         btnBuscar.FlatStyle = FlatStyle.Flat;
         btnBuscar.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
         btnBuscar.ForeColor = Color.White;
-        btnBuscar.Location = new Point(352, 85);
+        btnBuscar.Location = new Point(400, 85);
         btnBuscar.Name = "btnBuscar";
         btnBuscar.Size = new Size(90, 28);
         btnBuscar.TabIndex = 1;
@@ -197,7 +202,7 @@ partial class SigemVista
         btnNuevoPaciente.FlatStyle = FlatStyle.Flat;
         btnNuevoPaciente.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
         btnNuevoPaciente.ForeColor = Color.White;
-        btnNuevoPaciente.Location = new Point(450, 85);
+        btnNuevoPaciente.Location = new Point(498, 85);
         btnNuevoPaciente.Name = "btnNuevoPaciente";
         btnNuevoPaciente.Size = new Size(120, 28);
         btnNuevoPaciente.TabIndex = 2;
@@ -211,6 +216,8 @@ partial class SigemVista
         grpPaciente.Controls.Add(lblPacienteNombre);
         grpPaciente.Controls.Add(txtPacienteApellido);
         grpPaciente.Controls.Add(lblPacienteApellido);
+        grpPaciente.Controls.Add(txtCurp);
+        grpPaciente.Controls.Add(lblCurp);
         grpPaciente.Controls.Add(dtpFechaNacimiento);
         grpPaciente.Controls.Add(lblFechaNac);
         grpPaciente.Controls.Add(cmbSexo);
@@ -259,13 +266,32 @@ partial class SigemVista
         lblPacienteApellido.Size = new Size(54, 15);
         lblPacienteApellido.Text = "Apellido:";
 
+        // txtCurp
+        txtCurp.Font = new Font("Segoe UI", 9F);
+        txtCurp.Location = new Point(570, 30);
+        txtCurp.Name = "txtCurp";
+        txtCurp.PlaceholderText = "CURP";
+        txtCurp.CharacterCasing = CharacterCasing.Upper;
+        txtCurp.MaxLength = 18;
+        txtCurp.Size = new Size(180, 23);
+        txtCurp.TabIndex = 2;
+        txtCurp.Enabled = false;
+
+        // lblCurp
+        lblCurp.AutoSize = true;
+        lblCurp.Font = new Font("Segoe UI", 9F);
+        lblCurp.Location = new Point(508, 33);
+        lblCurp.Name = "lblCurp";
+        lblCurp.Size = new Size(38, 15);
+        lblCurp.Text = "CURP:";
+
         // dtpFechaNacimiento
         dtpFechaNacimiento.Font = new Font("Segoe UI", 9F);
         dtpFechaNacimiento.Format = DateTimePickerFormat.Short;
         dtpFechaNacimiento.Location = new Point(70, 68);
         dtpFechaNacimiento.Name = "dtpFechaNacimiento";
         dtpFechaNacimiento.Size = new Size(130, 23);
-        dtpFechaNacimiento.TabIndex = 2;
+        dtpFechaNacimiento.TabIndex = 3;
         dtpFechaNacimiento.Enabled = false;
 
         // lblFechaNac
@@ -283,7 +309,7 @@ partial class SigemVista
         cmbSexo.Location = new Point(340, 68);
         cmbSexo.Name = "cmbSexo";
         cmbSexo.Size = new Size(130, 23);
-        cmbSexo.TabIndex = 3;
+        cmbSexo.TabIndex = 4;
         cmbSexo.Enabled = false;
 
         // lblSexo
@@ -300,7 +326,7 @@ partial class SigemVista
         txtTelefono.Name = "txtTelefono";
         txtTelefono.PlaceholderText = "Teléfono";
         txtTelefono.Size = new Size(180, 23);
-        txtTelefono.TabIndex = 4;
+        txtTelefono.TabIndex = 5;
         txtTelefono.Enabled = false;
 
         // lblTelefono

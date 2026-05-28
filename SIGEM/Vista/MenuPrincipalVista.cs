@@ -371,7 +371,7 @@ public partial class MenuPrincipalVista : Form
         if (string.IsNullOrWhiteSpace(filtro))
             return true;
 
-        string texto = $"{paciente.Expediente} {paciente.Nombre} {paciente.Apellido} {paciente.Telefono} {paciente.Sexo} {paciente.Direccion}";
+        string texto = $"{paciente.Expediente} {paciente.Curp} {paciente.Nombre} {paciente.Apellido} {paciente.Telefono} {paciente.Sexo} {paciente.Direccion}";
         return texto.Contains(filtro, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -411,10 +411,20 @@ public partial class MenuPrincipalVista : Form
         };
         tarjeta.Controls.Add(datos);
 
+        Label curp = new()
+        {
+            Text = $"CURP: {TextoSeguro(paciente.Curp, "No registrada")}",
+            Location = new Point(24, 88),
+            Size = new Size(380, 24),
+            Font = new Font("Segoe UI", 9F),
+            ForeColor = Color.FromArgb(31, 41, 55)
+        };
+        tarjeta.Controls.Add(curp);
+
         Label telefono = new()
         {
             Text = $"Tel: {TextoSeguro(paciente.Telefono, "No registrado")}",
-            Location = new Point(24, 102),
+            Location = new Point(24, 112),
             Size = new Size(380, 24),
             Font = new Font("Segoe UI", 10F),
             ForeColor = Color.FromArgb(31, 41, 55)
@@ -424,7 +434,7 @@ public partial class MenuPrincipalVista : Form
         Label direccion = new()
         {
             Text = $"Direccion: {TextoSeguro(paciente.Direccion, "No registrada")}",
-            Location = new Point(24, 132),
+            Location = new Point(24, 140),
             Size = new Size(380, 24),
             Font = new Font("Segoe UI", 10F),
             ForeColor = Color.FromArgb(31, 41, 55)
@@ -604,9 +614,10 @@ public partial class MenuPrincipalVista : Form
     private static string FormatearPaciente(Paciente paciente)
     {
         string expediente = string.IsNullOrWhiteSpace(paciente.Expediente) ? "Sin expediente" : paciente.Expediente;
+        string curp = string.IsNullOrWhiteSpace(paciente.Curp) ? "Sin CURP" : paciente.Curp;
         string estado = paciente.EsBorrador ? "Borrador" : "Validado";
 
-        return $"{expediente} - {paciente.Nombre} {paciente.Apellido} ({estado})";
+        return $"{expediente} / {curp} - {paciente.Nombre} {paciente.Apellido} ({estado})";
     }
 
     // Gestión dinámica de colores. Respeta el verde lima/esmeralda si es Enfermera

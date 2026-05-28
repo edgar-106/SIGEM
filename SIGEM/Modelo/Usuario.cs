@@ -10,6 +10,10 @@ public enum RolUsuario
 
 public class Usuario
 {
+    public Usuario()
+    {
+    }
+
     public Usuario(string nombreUsuario, string contrasena, string nombreCompleto, RolUsuario rol)
     {
         NombreUsuario = nombreUsuario;
@@ -18,8 +22,8 @@ public class Usuario
         Rol = rol;
     }
 
-    public string NombreUsuario { get; }
-    public string Contrasena { get; }
-    public string NombreCompleto { get; }
-    public RolUsuario Rol { get; }
+    public string NombreUsuario { get; set; } = string.Empty;
+    public string Contrasena { get; set; } = string.Empty;
+    public string NombreCompleto { get; set; } = string.Empty;
+    public RolUsuario Rol { get; set; }
 }

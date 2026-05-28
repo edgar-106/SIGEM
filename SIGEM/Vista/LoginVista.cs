@@ -74,4 +74,9 @@ public partial class LoginVista : Form, ILoginVista
     {
         pnlContrasenaBorder.BackColor = Color.FromArgb(209, 213, 219);
     }
+
+    private void txtUsuario_TextChanged(object sender, EventArgs e)
+    {
+
+    }
 }

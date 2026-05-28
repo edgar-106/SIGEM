@@ -29,19 +29,19 @@ public class SigemPresentador
 
     private void BuscarPaciente(object? sender, EventArgs e)
     {
-        string expediente = vista.Expediente;
+        string identificador = vista.Expediente;
 
-        if (string.IsNullOrWhiteSpace(expediente))
+        if (string.IsNullOrWhiteSpace(identificador))
         {
             vista.MostrarError("Ingrese un número de expediente.");
             return;
         }
 
-        var paciente = repositorio.BuscarPorExpediente(expediente);
+        var paciente = repositorio.BuscarPorIdentificador(identificador);
 
         if (paciente is null)
         {
-            vista.MostrarError($"Paciente con expediente '{expediente}' no encontrado. Use 'Nuevo Paciente' para crearlo.");
+            vista.MostrarError($"Paciente con CURP o expediente '{identificador}' no encontrado. Use 'Nuevo Paciente' para crearlo.");
             vista.LimpiarFormulario();
             vista.HabilitarCamposPaciente(false);
             vista.HabilitarCamposSignosVitales(false);
@@ -66,15 +66,15 @@ public class SigemPresentador
 
     private void IniciarNuevoPaciente(object? sender, EventArgs e)
     {
-        string expediente = vista.Expediente;
+        string identificador = vista.Expediente;
 
-        if (string.IsNullOrWhiteSpace(expediente))
+        if (string.IsNullOrWhiteSpace(identificador))
         {
             vista.MostrarError("Ingrese un número de expediente antes de crear un nuevo paciente.");
             return;
         }
 
-        var existente = repositorio.BuscarPorExpediente(expediente);
+        var existente = repositorio.BuscarPorIdentificador(identificador);
         if (existente is not null)
         {
             vista.MostrarPaciente(existente);
@@ -85,15 +85,24 @@ public class SigemPresentador
         }
 
         esNuevoPaciente = true;
+        bool identificadorEsCurp = EsCurp(identificador);
         pacienteActual = new Paciente
         {
-            Expediente = expediente,
+            Expediente = identificadorEsCurp ? GenerarExpedienteTemporal(identificador) : identificador,
+            Curp = identificadorEsCurp ? identificador.ToUpperInvariant() : string.Empty,
             EsBorrador = usuario.Rol == RolUsuario.Enfermera,
             FechaRegistro = DateTime.Now
         };
 
         vista.EstablecerModoNuevoPaciente();
-        vista.MostrarMensaje($"Ingrese los datos del nuevo paciente (expediente: {expediente}).");
+        if (identificadorEsCurp)
+        {
+            vista.PacienteCurp = identificador.ToUpperInvariant();
+        }
+
+        vista.MostrarMensaje(identificadorEsCurp
+            ? $"Ingrese los datos del nuevo paciente (CURP: {identificador.ToUpperInvariant()})."
+            : $"Ingrese los datos del nuevo paciente (expediente: {identificador}).");
     }
 
     private void GuardarRegistro(object? sender, EventArgs e)
@@ -132,6 +141,7 @@ public class SigemPresentador
         {
             pacienteActual.Nombre = vista.PacienteNombre;
             pacienteActual.Apellido = vista.PacienteApellido;
+            pacienteActual.Curp = vista.PacienteCurp;
             pacienteActual.FechaNacimiento = vista.PacienteFechaNacimiento;
             pacienteActual.Sexo = vista.PacienteSexo;
             pacienteActual.Telefono = vista.PacienteTelefono;
@@ -143,7 +153,8 @@ public class SigemPresentador
             repositorio.AgregarSignosVitales(pacienteActual.Expediente, sv);
         }
 
-        pacienteActual = repositorio.BuscarPorExpediente(pacienteActual.Expediente);
+        pacienteActual = repositorio.BuscarPorIdentificador(pacienteActual.Curp) ??
+                         repositorio.BuscarPorExpediente(pacienteActual.Expediente);
 
         if (usuario.Rol == RolUsuario.Enfermera)
         {
@@ -176,7 +187,8 @@ public class SigemPresentador
         }
 
         repositorio.ValidarRegistro(pacienteActual.Expediente, ultimoIndice, vista.UsuarioActual);
-        pacienteActual = repositorio.BuscarPorExpediente(pacienteActual.Expediente);
+        pacienteActual = repositorio.BuscarPorIdentificador(pacienteActual.Curp) ??
+                         repositorio.BuscarPorExpediente(pacienteActual.Expediente);
 
         vista.MostrarMensaje($"Registro validado por {vista.UsuarioActual}.");
         if (pacienteActual is not null)
@@ -213,6 +225,10 @@ public class SigemPresentador
                 return "El nombre del paciente es obligatorio.";
             if (string.IsNullOrWhiteSpace(vista.PacienteApellido))
                 return "El apellido del paciente es obligatorio.";
+            if (string.IsNullOrWhiteSpace(vista.PacienteCurp))
+                return "La CURP del paciente es obligatoria.";
+            if (vista.PacienteCurp.Length != 18)
+                return "La CURP debe tener 18 caracteres.";
             if (string.IsNullOrWhiteSpace(vista.PacienteSexo))
                 return "El sexo del paciente es obligatorio.";
         }
@@ -244,5 +260,16 @@ public class SigemPresentador
             .ToList();
 
         vista.MostrarHistorial(registros);
+    }
+
+    private static bool EsCurp(string identificador)
+    {
+        return identificador.Trim().Length == 18;
+    }
+
+    private static string GenerarExpedienteTemporal(string curp)
+    {
+        string sufijo = curp.Length >= 4 ? curp[^4..] : curp;
+        return $"EXP-{DateTime.Now:yyyyMMddHHmmss}-{sufijo}".ToUpperInvariant();
     }
 }

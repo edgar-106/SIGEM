@@ -9,9 +9,15 @@ public class SigemRepositorioJson : ISigemRepositorio
 
     public SigemRepositorioJson()
     {
-        string carpetaDatos = Path.Combine(AppContext.BaseDirectory, "Datos");
+        string carpetaDatos = Path.Combine(AppContext.BaseDirectory, "Datos", "ims");
         Directory.CreateDirectory(carpetaDatos);
         rutaArchivo = Path.Combine(carpetaDatos, "pacientes.json");
+
+        string rutaAnterior = Path.Combine(AppContext.BaseDirectory, "Datos", "pacientes.json");
+        if (!File.Exists(rutaArchivo) && File.Exists(rutaAnterior))
+        {
+            File.Copy(rutaAnterior, rutaArchivo);
+        }
     }
 
     public Paciente? BuscarPorExpediente(string expediente)
@@ -19,6 +25,21 @@ public class SigemRepositorioJson : ISigemRepositorio
         var pacientes = CargarPacientes();
         return pacientes.Find(p =>
             string.Equals(p.Expediente, expediente, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public Paciente? BuscarPorCurp(string curp)
+    {
+        var pacientes = CargarPacientes();
+        return pacientes.Find(p =>
+            string.Equals(p.Curp, curp, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public Paciente? BuscarPorIdentificador(string identificador)
+    {
+        var pacientes = CargarPacientes();
+        return pacientes.Find(p =>
+            string.Equals(p.Expediente, identificador, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(p.Curp, identificador, StringComparison.OrdinalIgnoreCase));
     }
 
     public List<Paciente> ObtenerTodos()
@@ -30,7 +51,9 @@ public class SigemRepositorioJson : ISigemRepositorio
     {
         var pacientes = CargarPacientes();
         var existente = pacientes.FindIndex(p =>
-            string.Equals(p.Expediente, paciente.Expediente, StringComparison.OrdinalIgnoreCase));
+            string.Equals(p.Expediente, paciente.Expediente, StringComparison.OrdinalIgnoreCase) ||
+            (!string.IsNullOrWhiteSpace(paciente.Curp) &&
+             string.Equals(p.Curp, paciente.Curp, StringComparison.OrdinalIgnoreCase)));
 
         if (existente >= 0)
         {
@@ -50,7 +73,8 @@ public class SigemRepositorioJson : ISigemRepositorio
     {
         var pacientes = CargarPacientes();
         var idx = pacientes.FindIndex(p =>
-            string.Equals(p.Expediente, expediente, StringComparison.OrdinalIgnoreCase));
+            string.Equals(p.Expediente, expediente, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(p.Curp, expediente, StringComparison.OrdinalIgnoreCase));
 
         if (idx >= 0)
         {
@@ -63,7 +87,8 @@ public class SigemRepositorioJson : ISigemRepositorio
     {
         var pacientes = CargarPacientes();
         var idx = pacientes.FindIndex(p =>
-            string.Equals(p.Expediente, expediente, StringComparison.OrdinalIgnoreCase));
+            string.Equals(p.Expediente, expediente, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(p.Curp, expediente, StringComparison.OrdinalIgnoreCase));
 
         if (idx >= 0 && indiceSignoVital >= 0 && indiceSignoVital < pacientes[idx].SignosVitales.Count)
         {
