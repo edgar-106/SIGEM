@@ -62,15 +62,24 @@ public partial class SigemVista : Form, ISigemVista
         RolActual = usuario.Rol;
         lblRolUsuario.Text = $"{usuario.NombreCompleto} ({usuario.Rol})";
 
+        // CAMBIO: Control dinámico de colores y textos según el rol
         if (usuario.Rol == RolUsuario.Doctor)
         {
             MostrarBotonValidar(true);
             btnGuardar.Text = "Guardar y Validar";
+
+            // Colores originales en azul para el Doctor
+            pnlEncabezado.BackColor = Color.FromArgb(47, 124, 246);
+            btnBuscar.BackColor = Color.FromArgb(47, 124, 246);
         }
         else
         {
             MostrarBotonValidar(false);
             btnGuardar.Text = "Guardar (Borrador)";
+
+            // CAMBIO NUEVO: Cambia la barra de título y el botón Buscar a verde esmeralda para la Enfermera
+            pnlEncabezado.BackColor = Color.FromArgb(16, 185, 129);
+            btnBuscar.BackColor = Color.FromArgb(16, 185, 129);
         }
     }
 

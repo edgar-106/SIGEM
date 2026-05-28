@@ -14,6 +14,10 @@ public partial class MenuPrincipalVista : Form
         this.usuario = usuario;
         InitializeComponent();
         lblUsuario.Text = $"Usuario: {usuario.NombreCompleto} ({ObtenerRolTexto(usuario.Rol)})";
+
+        // Evaluar los permisos del rol antes de mostrar cualquier pantalla
+        VerificarPermisosPorRol();
+
         MostrarPanelPrincipal();
         // Solo el administrador ve el bot�n
         btnAdministracion.Visible = usuario.Rol == RolUsuario.Administrador;
@@ -21,6 +25,41 @@ public partial class MenuPrincipalVista : Form
         btnPacientes.Visible = usuario.Rol != RolUsuario.Administrador;
         btnConsulta.Visible = usuario.Rol != RolUsuario.Administrador;
         btnPanelPrincipal.Visible = usuario.Rol != RolUsuario.Administrador;
+    }
+
+    // Nuevo método para ocultar botones del menú y cambiar colores a Verde Lima según el rol
+    private void VerificarPermisosPorRol()
+    {
+        if (usuario.Rol == RolUsuario.Enfermera)
+        {
+            // Oculta los botones del menú lateral izquierdo
+            btnPacientes.Visible = false;
+            btnAdministracion.Visible = false;
+
+            // Mueve el botón de Consulta Médica hacia arriba 
+            btnConsulta.Location = btnPacientes.Location;
+
+            // CAMBIO: Verde lima suave para el fondo del menú de la enfermera
+            pnlMenu.BackColor = Color.FromArgb(236, 253, 245);
+            btnPanelPrincipal.BackColor = Color.FromArgb(236, 253, 245);
+            btnConsulta.BackColor = Color.FromArgb(236, 253, 245);
+
+            // CAMBIO NUEVO: Cambia también el fondo del logo "SIGEM" a verde para la enfermera
+            // (Asegúrate de que el panel azul superior de tu diseño se llame pnlLogo)
+            pnlMarca.BackColor = Color.FromArgb(16, 185, 129);
+        }
+        else if (usuario.Rol == RolUsuario.Doctor)
+        {
+            // El doctor tiene acceso completo
+            btnPacientes.Visible = true;
+            btnAdministracion.Visible = true;
+
+            // Asegurar que el Doctor mantenga sus colores originales (Blanco y Azul)
+            pnlMenu.BackColor = Color.White;
+            btnPanelPrincipal.BackColor = Color.White;
+            btnConsulta.BackColor = Color.White;
+            pnlMarca.BackColor = Color.FromArgb(47, 124, 246); // Azul original
+        }
     }
 
     private static string ObtenerRolTexto(RolUsuario rol) => rol switch
@@ -50,6 +89,8 @@ public partial class MenuPrincipalVista : Form
 
     private void MostrarGestionPacientes()
     {
+        if (usuario.Rol == RolUsuario.Enfermera) return;
+
         MostrarContenido("Gestion de Pacientes", "Administracion completa de expedientes medicos");
         SeleccionarBoton(btnPacientes);
         ConstruirGestionPacientes();
@@ -64,6 +105,8 @@ public partial class MenuPrincipalVista : Form
 
     private void MostrarAdministracion()
     {
+        if (usuario.Rol == RolUsuario.Enfermera) return;
+
         LimpiarContenido();
         SeleccionarBoton(btnAdministracion);
         var adminControl = new AdministracionControl();
@@ -92,13 +135,24 @@ public partial class MenuPrincipalVista : Form
         pnlContenido.Controls.Add(pnlActividadReciente);
         pnlContenido.Controls.Add(pnlBorradores);
 
-        cardPacientes.Visible = true;
-        cardBorradores.Visible = true;
+        if (usuario.Rol == RolUsuario.Enfermera)
+        {
+            cardPacientes.Visible = false;
+            pnlPacientesRecientes.Visible = false;
+            cardBorradores.Visible = false;
+            pnlBorradores.Visible = false;
+        }
+        else
+        {
+            cardPacientes.Visible = true;
+            pnlPacientesRecientes.Visible = true;
+            cardBorradores.Visible = true;
+            pnlBorradores.Visible = true;
+        }
+
         cardSignos.Visible = true;
         cardHoy.Visible = true;
-        pnlPacientesRecientes.Visible = true;
         pnlActividadReciente.Visible = true;
-        pnlBorradores.Visible = true;
     }
 
     private void ConstruirGestionPacientes()
@@ -167,12 +221,19 @@ public partial class MenuPrincipalVista : Form
 
     private void ConstruirConsultaMedica()
     {
-        FlowLayoutPanel tabs = CrearTabs(200, [
+        var listaTabs = new List<(string Texto, bool Activo)>
+        {
             ("Nueva Consulta", subSeccionConsulta == "Nueva Consulta"),
-            ("Receta Medica", subSeccionConsulta == "Receta Medica"),
-            ("Diagnostico", subSeccionConsulta == "Diagnostico"),
-            ("Tratamiento", subSeccionConsulta == "Tratamiento")
-        ]);
+            ("Receta Medica", subSeccionConsulta == "Receta Medica")
+        };
+
+        if (usuario.Rol == RolUsuario.Doctor)
+        {
+            listaTabs.Add(("Diagnostico", subSeccionConsulta == "Diagnostico"));
+            listaTabs.Add(("Tratamiento", subSeccionConsulta == "Tratamiento"));
+        }
+
+        FlowLayoutPanel tabs = CrearTabs(200, listaTabs.ToArray());
         pnlContenido.Controls.Add(tabs);
 
         switch (subSeccionConsulta)
@@ -181,10 +242,12 @@ public partial class MenuPrincipalVista : Form
                 ConstruirMensajeSimple("Emitir Receta Medica", "Esta funcionalidad se encuentra en la seccion de gestion de pacientes. Selecciona un paciente para emitir una receta medica.", 330);
                 break;
             case "Diagnostico":
-                ConstruirFormularioDiagnostico();
+                if (usuario.Rol == RolUsuario.Doctor) ConstruirFormularioDiagnostico();
+                else SeleccionarConsulta("Nueva Consulta");
                 break;
             case "Tratamiento":
-                ConstruirFormularioTratamiento();
+                if (usuario.Rol == RolUsuario.Doctor) ConstruirFormularioTratamiento();
+                else SeleccionarConsulta("Nueva Consulta");
                 break;
             default:
                 ConstruirNuevaConsulta();
@@ -205,6 +268,11 @@ public partial class MenuPrincipalVista : Form
             WrapContents = false
         };
 
+        // CAMBIO NUEVO: Definir el color de la pestaña activa según el rol
+        Color colorTabActiva = (usuario.Rol == RolUsuario.Enfermera)
+            ? Color.FromArgb(16, 185, 129)   // Verde para enfermera
+            : Color.FromArgb(47, 124, 246);  // Azul para doctor
+
         foreach ((string texto, bool activo) in tabs)
         {
             Button boton = new()
@@ -214,7 +282,7 @@ public partial class MenuPrincipalVista : Form
                 Margin = new Padding(0, 0, 10, 0),
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                BackColor = activo ? Color.FromArgb(47, 124, 246) : Color.FromArgb(243, 244, 246),
+                BackColor = activo ? colorTabActiva : Color.FromArgb(243, 244, 246), // Aplica color dinámico
                 ForeColor = activo ? Color.White : Color.FromArgb(31, 41, 55),
                 Cursor = Cursors.Hand
             };
@@ -548,18 +616,31 @@ public partial class MenuPrincipalVista : Form
         return $"{expediente} - {paciente.Nombre} {paciente.Apellido} ({estado})";
     }
 
+    // Gestión dinámica de colores. Respeta el verde lima/esmeralda si es Enfermera
     private void SeleccionarBoton(Button botonActivo)
     {
         Button[] botones = [btnPanelPrincipal, btnPacientes, btnConsulta, btnAdministracion];
 
+        Color colorFondoPorRol = (usuario.Rol == RolUsuario.Enfermera)
+            ? Color.FromArgb(236, 253, 245)  // Fondo verde lima suave para enfermera
+            : Color.White;                    // Fondo blanco para doctor
+
         foreach (Button boton in botones)
         {
-            boton.BackColor = Color.White;
+            boton.BackColor = colorFondoPorRol;
             boton.ForeColor = Color.FromArgb(31, 41, 55);
         }
 
-        botonActivo.BackColor = Color.FromArgb(47, 124, 246);
-        botonActivo.ForeColor = Color.White;
+        if (usuario.Rol == RolUsuario.Enfermera)
+        {
+            botonActivo.BackColor = Color.FromArgb(16, 185, 129); // Verde esmeralda vivo corporativo
+            botonActivo.ForeColor = Color.White;
+        }
+        else
+        {
+            botonActivo.BackColor = Color.FromArgb(47, 124, 246); // Azul SIGEM original para Doctor
+            botonActivo.ForeColor = Color.White;
+        }
     }
 
     private void BtnPanelPrincipal_Click(object sender, EventArgs e)
