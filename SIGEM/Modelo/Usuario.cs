@@ -3,9 +3,8 @@ namespace SIGEM.Modelo;
 public enum RolUsuario
 {
     Doctor,
-    Enfermera
-
-
+    Enfermera,
+    Administrador
 }
 
 public class Usuario

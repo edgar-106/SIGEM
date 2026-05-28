@@ -3,10 +3,11 @@ namespace SIGEM.Modelo;
 public class ServicioAutenticacion
 {
     private readonly List<Usuario> usuarios =
-    [
-        new("admin", "admin123", "Dr. Admin", RolUsuario.Doctor),
-        new("enfermera", "enfermera123", "Enf. María López", RolUsuario.Enfermera),
-    ];
+[
+    new("admin", "admin123", "Dr. Admin", RolUsuario.Doctor),
+    new("enfermera", "enfermera123", "Enf. María López", RolUsuario.Enfermera),
+    new("administrador", "admin456", "Administrador SIGEM", RolUsuario.Administrador),
+];
 
     public Usuario? Autenticar(string nombreUsuario, string contrasena)
     {

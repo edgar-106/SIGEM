@@ -15,16 +15,23 @@ public partial class MenuPrincipalVista : Form
         InitializeComponent();
         lblUsuario.Text = $"Usuario: {usuario.NombreCompleto} ({ObtenerRolTexto(usuario.Rol)})";
         MostrarPanelPrincipal();
+        // Solo el administrador ve el botón
+        btnAdministracion.Visible = usuario.Rol == RolUsuario.Administrador;
+        btnAdministracion.Visible = usuario.Rol == RolUsuario.Administrador;
+        btnPacientes.Visible = usuario.Rol != RolUsuario.Administrador;
+        btnConsulta.Visible = usuario.Rol != RolUsuario.Administrador;
+        btnPanelPrincipal.Visible = usuario.Rol != RolUsuario.Administrador;
     }
 
     private static string ObtenerRolTexto(RolUsuario rol) => rol switch
     {
         RolUsuario.Doctor => "Doctor",
         RolUsuario.Enfermera => "Enfermera",
+        RolUsuario.Administrador => "Administrador",
         _ => "Usuario"
     };
 
-    private void MostrarContenido(string titulo, string subtitulo)
+    private void MostrarContenido(string titulo, string     subtitulo)
     {
         LimpiarContenido();
         lblTituloContenido.Text = titulo;
