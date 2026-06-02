@@ -20,5 +20,6 @@ public class SignosVitales
     public string RegistradoPor { get; set; } = string.Empty;
     public bool Validado { get; set; }
     public string? ValidadoPor { get; set; }
+    public int? IdDoctor { get; set; }
 
 }

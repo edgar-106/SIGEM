@@ -83,6 +83,21 @@ public class SigemRepositorioJson : ISigemRepositorio
         }
     }
 
+    public void ActualizarSignosVitales(string expediente, int indiceSignoVital, SignosVitales sv)
+    {
+        var pacientes = CargarPacientes();
+        var idx = pacientes.FindIndex(p =>
+            string.Equals(p.Expediente, expediente, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(p.Curp, expediente, StringComparison.OrdinalIgnoreCase));
+
+        if (idx < 0 || indiceSignoVital < 0 || indiceSignoVital >= pacientes[idx].SignosVitales.Count)
+            return;
+
+        pacientes[idx].SignosVitales[indiceSignoVital] = sv;
+        pacientes[idx].EsBorrador = pacientes[idx].SignosVitales.Any(signos => !signos.Validado);
+        GuardarPacientes(pacientes);
+    }
+
     public void ValidarRegistro(string expediente, int indiceSignoVital, string validadoPor)
     {
         var pacientes = CargarPacientes();
@@ -104,6 +119,31 @@ public class SigemRepositorioJson : ISigemRepositorio
     {
         var pacientes = CargarPacientes();
         return pacientes.Where(p => p.EsBorrador).ToList();
+    }
+
+    public Usuario? AutenticarUsuario(string nombreUsuario, string contrasena)
+    {
+        string ruta = Path.Combine(AppContext.BaseDirectory, "Datos", "ims", "usuarios.json");
+        if (!File.Exists(ruta)) return null;
+
+        string json = File.ReadAllText(ruta);
+        var usuarios = JsonSerializer.Deserialize<List<Usuario>>(json) ?? [];
+        return usuarios.Find(u =>
+            string.Equals(u.NombreUsuario, nombreUsuario, StringComparison.OrdinalIgnoreCase)
+            && u.Contrasena == contrasena);
+    }
+
+    public bool EliminarPaciente(string identificador)
+    {
+        var pacientes = CargarPacientes();
+        int eliminados = pacientes.RemoveAll(p =>
+            string.Equals(p.Expediente, identificador, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(p.Curp, identificador, StringComparison.OrdinalIgnoreCase));
+
+        if (eliminados > 0)
+            GuardarPacientes(pacientes);
+
+        return eliminados > 0;
     }
 
     private List<Paciente> CargarPacientes()

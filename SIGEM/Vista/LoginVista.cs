@@ -11,7 +11,8 @@ public partial class LoginVista : Form, ILoginVista
     public LoginVista()
     {
         InitializeComponent();
-        presentador = new LoginPresentador(this, new ServicioAutenticacion());
+        var repo = ConexionBD.CrearRepositorio();
+        presentador = new LoginPresentador(this, new ServicioAutenticacion(repo));
     }
 
     public event EventHandler? IniciarSesionSolicitado;
@@ -29,9 +30,30 @@ public partial class LoginVista : Form, ILoginVista
     public void AbrirMenuPrincipal(Usuario usuario)
     {
         MenuPrincipalVista menuPrincipal = new(usuario);
-        menuPrincipal.FormClosed += (_, _) => Close();
+        menuPrincipal.FormClosed += (_, _) =>
+        {
+            if (menuPrincipal.CierreSesionSolicitado)
+            {
+                PrepararNuevoInicioSesion();
+                Show();
+                return;
+            }
+
+            Close();
+        };
         Hide();
         menuPrincipal.Show();
+    }
+
+    private void PrepararNuevoInicioSesion()
+    {
+        txtUsuario.Clear();
+        txtContrasena.Clear();
+        lblError.Visible = false;
+        mostrarContrasena = false;
+        txtContrasena.UseSystemPasswordChar = true;
+        btnTogglePassword.Text = "Mostrar";
+        txtUsuario.Focus();
     }
 
     private void BtnIniciarSesion_Click(object sender, EventArgs e)

@@ -8,6 +8,9 @@ public interface ISigemRepositorio
     List<Paciente> ObtenerTodos();
     void GuardarPaciente(Paciente paciente);
     void AgregarSignosVitales(string expediente, SignosVitales sv);
+    void ActualizarSignosVitales(string expediente, int indiceSignoVital, SignosVitales sv);
     void ValidarRegistro(string expediente, int indiceSignoVital, string validadoPor);
     List<Paciente> ObtenerBorradores();
+    bool EliminarPaciente(string identificador);
+    Usuario? AutenticarUsuario(string nombreUsuario, string contrasena);
 }

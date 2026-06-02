@@ -3,9 +3,9 @@ namespace SIGEM.Modelo;
 public enum RolUsuario
 {
     Doctor,
-    Enfermera
-
-
+    Enfermera,
+    Recepcionista,
+    Administrador
 }
 
 public class Usuario
@@ -26,4 +26,6 @@ public class Usuario
     public string Contrasena { get; set; } = string.Empty;
     public string NombreCompleto { get; set; } = string.Empty;
     public RolUsuario Rol { get; set; }
+    public int? IdUsuario { get; set; }
+    public int? IdDoctor { get; set; }
 }

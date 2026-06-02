@@ -6,9 +6,15 @@ public class ServicioAutenticacion
 {
     private readonly string rutaUsuarios;
     private readonly JsonSerializerOptions jsonOptions = new() { WriteIndented = true };
+    private readonly ISigemRepositorio? repositorio;
 
-    public ServicioAutenticacion()
+    public ServicioAutenticacion() : this(null)
     {
+    }
+
+    public ServicioAutenticacion(ISigemRepositorio? repositorio)
+    {
+        this.repositorio = repositorio;
         string carpetaIms = Path.Combine(AppContext.BaseDirectory, "Datos", "ims");
         Directory.CreateDirectory(carpetaIms);
         rutaUsuarios = Path.Combine(carpetaIms, "usuarios.json");
@@ -17,6 +23,19 @@ public class ServicioAutenticacion
 
     public Usuario? Autenticar(string nombreUsuario, string contrasena)
     {
+        if (repositorio is not null)
+        {
+            try
+            {
+                var usuario = repositorio.AutenticarUsuario(nombreUsuario, contrasena);
+                if (usuario is not null)
+                    return usuario;
+            }
+            catch
+            {
+            }
+        }
+
         List<Usuario> usuarios = CargarUsuarios();
         return usuarios.Find(u =>
             string.Equals(u.NombreUsuario, nombreUsuario, StringComparison.OrdinalIgnoreCase)
@@ -30,8 +49,10 @@ public class ServicioAutenticacion
 
         List<Usuario> usuarios =
         [
-            new("doctor", "doctor123", "Dr. Admin", RolUsuario.Doctor),
-            new("enfermera", "enfermera123", "Enf. Maria Lopez", RolUsuario.Enfermera),
+            new("doctor", "doctor123", "Doctor SIGEM", RolUsuario.Doctor),
+            new("enfermera", "enfermera123", "Enfermera SIGEM", RolUsuario.Enfermera),
+            new("recepcion", "recepcion123", "Recepcionista SIGEM", RolUsuario.Recepcionista),
+            new("admin", "admin123", "Administrador SIGEM", RolUsuario.Administrador),
         ];
 
         GuardarUsuarios(usuarios);

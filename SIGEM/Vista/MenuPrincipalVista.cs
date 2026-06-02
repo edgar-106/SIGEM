@@ -1,17 +1,21 @@
-using SIGEM.Modelo;
+﻿using SIGEM.Modelo;
 
 namespace SIGEM.Vista;
 
 public partial class MenuPrincipalVista : Form
 {
     private readonly Usuario usuario;
-    private readonly ISigemRepositorio repositorio = new SigemRepositorioJson();
+    private readonly PermisosRol permisos;
+    private readonly ISigemRepositorio repositorio = ConexionBD.CrearRepositorio();
     private Form? formularioEmbebido;
     private string subSeccionConsulta = "Nueva Consulta";
+
+    public bool CierreSesionSolicitado { get; private set; }
 
     public MenuPrincipalVista(Usuario usuario)
     {
         this.usuario = usuario;
+        permisos = PermisosRol.Para(usuario.Rol);
         InitializeComponent();
         lblUsuario.Text = $"Usuario: {usuario.NombreCompleto} ({ObtenerRolTexto(usuario.Rol)})";
 
@@ -21,45 +25,41 @@ public partial class MenuPrincipalVista : Form
         MostrarPanelPrincipal();
     }
 
-    // Nuevo método para ocultar botones del menú y cambiar colores a Verde Lima según el rol
+    // Nuevo mÃ©todo para ocultar botones del menÃº y cambiar colores a Verde Lima segÃºn el rol
     private void VerificarPermisosPorRol()
     {
-        if (usuario.Rol == RolUsuario.Enfermera)
-        {
-            // Oculta los botones del menú lateral izquierdo
-            btnPacientes.Visible = false;
-            btnAdministracion.Visible = false;
+        btnPacientes.Visible = permisos.PuedeVerPacientes;
+        btnConsulta.Visible = permisos.PuedeVerSignosVitales;
+        btnAdministracion.Visible = permisos.PuedeAdministrarSistema;
 
-            // Mueve el botón de Consulta Médica hacia arriba 
+        if (!btnPacientes.Visible && btnConsulta.Visible)
             btnConsulta.Location = btnPacientes.Location;
 
-            // CAMBIO: Verde lima suave para el fondo del menú de la enfermera
-            pnlMenu.BackColor = Color.FromArgb(236, 253, 245);
-            btnPanelPrincipal.BackColor = Color.FromArgb(236, 253, 245);
-            btnConsulta.BackColor = Color.FromArgb(236, 253, 245);
+        if (!btnConsulta.Visible && btnAdministracion.Visible)
+            btnAdministracion.Location = btnPacientes.Location;
 
-            // CAMBIO NUEVO: Cambia también el fondo del logo "SIGEM" a verde para la enfermera
-            // (Asegúrate de que el panel azul superior de tu diseño se llame pnlLogo)
-            pnlMarca.BackColor = Color.FromArgb(16, 185, 129);
-        }
-        else if (usuario.Rol == RolUsuario.Doctor)
-        {
-            // El doctor tiene acceso completo
-            btnPacientes.Visible = true;
-            btnAdministracion.Visible = true;
+        bool esEnfermeria = usuario.Rol == RolUsuario.Enfermera;
+        bool esAdmin = usuario.Rol == RolUsuario.Administrador;
 
-            // Asegurar que el Doctor mantenga sus colores originales (Blanco y Azul)
-            pnlMenu.BackColor = Color.White;
-            btnPanelPrincipal.BackColor = Color.White;
-            btnConsulta.BackColor = Color.White;
-            pnlMarca.BackColor = Color.FromArgb(47, 124, 246); // Azul original
-        }
+        Color fondoMenu = esEnfermeria ? Color.FromArgb(236, 253, 245) : Color.White;
+        Color marca = esEnfermeria
+            ? Color.FromArgb(16, 185, 129)
+            : esAdmin ? Color.FromArgb(75, 85, 99) : Color.FromArgb(47, 124, 246);
+
+        pnlMenu.BackColor = fondoMenu;
+        btnPanelPrincipal.BackColor = fondoMenu;
+        btnPacientes.BackColor = fondoMenu;
+        btnConsulta.BackColor = fondoMenu;
+        btnAdministracion.BackColor = fondoMenu;
+        pnlMarca.BackColor = marca;
     }
 
     private static string ObtenerRolTexto(RolUsuario rol) => rol switch
     {
         RolUsuario.Doctor => "Doctor",
         RolUsuario.Enfermera => "Enfermera",
+        RolUsuario.Recepcionista => "Recepcionista",
+        RolUsuario.Administrador => "Administrador",
         _ => "Usuario"
     };
 
@@ -82,7 +82,11 @@ public partial class MenuPrincipalVista : Form
 
     private void MostrarGestionPacientes()
     {
-        if (usuario.Rol == RolUsuario.Enfermera) return;
+        if (!permisos.PuedeVerPacientes)
+        {
+            MessageBox.Show("Tu rol no tiene permiso para gestionar pacientes.", "Permisos SIGEM", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
 
         MostrarContenido("Gestion de Pacientes", "Administracion completa de expedientes medicos");
         SeleccionarBoton(btnPacientes);
@@ -91,6 +95,12 @@ public partial class MenuPrincipalVista : Form
 
     private void MostrarConsultaMedica()
     {
+        if (!permisos.PuedeVerSignosVitales)
+        {
+            MessageBox.Show("Tu rol no tiene permiso para consultar signos vitales.", "Permisos SIGEM", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
         MostrarContenido("Consulta Medica", "Gestion de consultas, diagnosticos y tratamientos");
         SeleccionarBoton(btnConsulta);
         ConstruirConsultaMedica();
@@ -98,7 +108,11 @@ public partial class MenuPrincipalVista : Form
 
     private void MostrarAdministracion()
     {
-        if (usuario.Rol == RolUsuario.Enfermera) return;
+        if (!permisos.PuedeAdministrarSistema)
+        {
+            MessageBox.Show("Tu rol no tiene permiso para administrar el sistema.", "Permisos SIGEM", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
 
         LimpiarContenido();
         SeleccionarBoton(btnAdministracion);
@@ -128,7 +142,7 @@ public partial class MenuPrincipalVista : Form
         pnlContenido.Controls.Add(pnlActividadReciente);
         pnlContenido.Controls.Add(pnlBorradores);
 
-        if (usuario.Rol == RolUsuario.Enfermera)
+        if (!permisos.PuedeVerPacientes || usuario.Rol == RolUsuario.Enfermera)
         {
             cardPacientes.Visible = false;
             pnlPacientesRecientes.Visible = false;
@@ -143,9 +157,9 @@ public partial class MenuPrincipalVista : Form
             pnlBorradores.Visible = true;
         }
 
-        cardSignos.Visible = true;
-        cardHoy.Visible = true;
-        pnlActividadReciente.Visible = true;
+        cardSignos.Visible = permisos.PuedeVerSignosVitales;
+        cardHoy.Visible = permisos.PuedeVerSignosVitales;
+        pnlActividadReciente.Visible = permisos.PuedeVerSignosVitales;
     }
 
     private void ConstruirGestionPacientes()
@@ -216,14 +230,18 @@ public partial class MenuPrincipalVista : Form
     {
         var listaTabs = new List<(string Texto, bool Activo)>
         {
-            ("Nueva Consulta", subSeccionConsulta == "Nueva Consulta"),
-            ("Receta Medica", subSeccionConsulta == "Receta Medica")
+            ("Nueva Consulta", subSeccionConsulta == "Nueva Consulta")
         };
 
         if (usuario.Rol == RolUsuario.Doctor)
         {
+            listaTabs.Add(("Receta Medica", subSeccionConsulta == "Receta Medica"));
             listaTabs.Add(("Diagnostico", subSeccionConsulta == "Diagnostico"));
             listaTabs.Add(("Tratamiento", subSeccionConsulta == "Tratamiento"));
+        }
+        else if (subSeccionConsulta is "Receta Medica" or "Diagnostico" or "Tratamiento")
+        {
+            subSeccionConsulta = "Nueva Consulta";
         }
 
         FlowLayoutPanel tabs = CrearTabs(200, listaTabs.ToArray());
@@ -232,7 +250,10 @@ public partial class MenuPrincipalVista : Form
         switch (subSeccionConsulta)
         {
             case "Receta Medica":
-                ConstruirMensajeSimple("Emitir Receta Medica", "Esta funcionalidad se encuentra en la seccion de gestion de pacientes. Selecciona un paciente para emitir una receta medica.", 330);
+                if (usuario.Rol == RolUsuario.Doctor)
+                    ConstruirMensajeSimple("Emitir Receta Medica", "Esta funcionalidad se encuentra en la seccion de gestion de pacientes. Selecciona un paciente para emitir una receta medica.", 330);
+                else
+                    ConstruirNuevaConsulta();
                 break;
             case "Diagnostico":
                 if (usuario.Rol == RolUsuario.Doctor) ConstruirFormularioDiagnostico();
@@ -261,7 +282,7 @@ public partial class MenuPrincipalVista : Form
             WrapContents = false
         };
 
-        // CAMBIO NUEVO: Definir el color de la pestaña activa según el rol
+        // CAMBIO NUEVO: Definir el color de la pestaÃ±a activa segÃºn el rol
         Color colorTabActiva = (usuario.Rol == RolUsuario.Enfermera)
             ? Color.FromArgb(16, 185, 129)   // Verde para enfermera
             : Color.FromArgb(47, 124, 246);  // Azul para doctor
@@ -275,7 +296,7 @@ public partial class MenuPrincipalVista : Form
                 Margin = new Padding(0, 0, 10, 0),
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                BackColor = activo ? colorTabActiva : Color.FromArgb(243, 244, 246), // Aplica color dinámico
+                BackColor = activo ? colorTabActiva : Color.FromArgb(243, 244, 246), // Aplica color dinÃ¡mico
                 ForeColor = activo ? Color.White : Color.FromArgb(31, 41, 55),
                 Cursor = Cursors.Hand
             };
@@ -304,15 +325,343 @@ public partial class MenuPrincipalVista : Form
         contenedor.AutoScroll = true;
         pnlContenido.Controls.Add(contenedor);
 
-        SigemVista vistaSignos = new(usuario)
+        Label lblInstruccion = new()
         {
-            TopLevel = false,
-            FormBorderStyle = FormBorderStyle.None,
-            Dock = DockStyle.Fill
+            Text = "Pacientes registrados en el sistema. Seleccione uno para registrar signos vitales.",
+            Location = new Point(28, 16),
+            Size = new Size(860, 22),
+            Font = new Font("Segoe UI", 10F),
+            ForeColor = Color.FromArgb(107, 114, 128)
         };
-        formularioEmbebido = vistaSignos;
-        contenedor.Controls.Add(vistaSignos);
-        vistaSignos.Show();
+        contenedor.Controls.Add(lblInstruccion);
+
+        Panel pnlBusqueda = new()
+        {
+            Location = new Point(28, 48),
+            Size = new Size(580, 40),
+            BackColor = Color.FromArgb(243, 244, 246),
+            BorderStyle = BorderStyle.FixedSingle
+        };
+        TextBox buscador = new()
+        {
+            Location = new Point(12, 8),
+            Size = new Size(550, 28),
+            Font = new Font("Segoe UI", 11F),
+            BorderStyle = BorderStyle.None,
+            BackColor = Color.FromArgb(243, 244, 246),
+            PlaceholderText = "Buscar paciente por nombre, expediente o CURP..."
+        };
+        pnlBusqueda.Controls.Add(buscador);
+        contenedor.Controls.Add(pnlBusqueda);
+
+        Label lblContador = new()
+        {
+            Location = new Point(28, 96),
+            Size = new Size(400, 20),
+            Font = new Font("Segoe UI", 9F),
+            ForeColor = Color.FromArgb(156, 163, 175)
+        };
+        contenedor.Controls.Add(lblContador);
+
+        FlowLayoutPanel lista = new()
+        {
+            Location = new Point(28, 120),
+            Size = new Size(880, 490),
+            AutoScroll = true,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            BackColor = Color.White
+        };
+        contenedor.Controls.Add(lista);
+
+        Button btnNuevo = CrearBotonPrimario("+ Nuevo Paciente", 628, 46, 280, 42);
+        btnNuevo.BackColor = Color.FromArgb(16, 185, 129);
+        contenedor.Controls.Add(btnNuevo);
+
+        void CargarTarjetas(string filtro)
+        {
+            lista.Controls.Clear();
+            List<Paciente> pacientes = repositorio.ObtenerTodos();
+
+            if (!string.IsNullOrWhiteSpace(filtro))
+            {
+                pacientes = pacientes.Where(p =>
+                    (p.Nombre + " " + p.Apellido).Contains(filtro, StringComparison.OrdinalIgnoreCase) ||
+                    (p.Expediente ?? "").Contains(filtro, StringComparison.OrdinalIgnoreCase) ||
+                    (p.Curp ?? "").Contains(filtro, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            lblContador.Text = pacientes.Count == 1
+                ? "1 paciente encontrado"
+                : $"{pacientes.Count} pacientes encontrados";
+
+            if (pacientes.Count == 0)
+            {
+                Panel empty = CrearTarjetaVacia("No hay pacientes registrados. Use el boton \"+ Nuevo Paciente\" para crear uno.");
+                lista.Controls.Add(empty);
+                return;
+            }
+
+            foreach (Paciente p in pacientes.OrderByDescending(p => p.FechaRegistro))
+            {
+                lista.Controls.Add(CrearTarjetaCrud(p, () => CargarTarjetas(buscador.Text)));
+            }
+        }
+
+        btnNuevo.Click += (_, _) =>
+        {
+            SigemVista sv = new(usuario);
+            sv.SetUsuario(usuario);
+            sv.EstablecerModoNuevoPaciente();
+            sv.ShowDialog();
+            CargarTarjetas(buscador.Text);
+        };
+
+        buscador.TextChanged += (_, _) => CargarTarjetas(buscador.Text);
+        buscador.KeyDown += (_, e) =>
+        {
+            if (e.KeyCode == Keys.Enter) e.SuppressKeyPress = true;
+        };
+        CargarTarjetas(string.Empty);
+    }
+
+    private Panel CrearTarjetaCrud(Paciente p, Action recargar)
+    {
+        Panel tarjeta = new()
+        {
+            Size = new Size(850, 76),
+            BackColor = Color.White,
+            Margin = new Padding(0, 0, 0, 10)
+        };
+        tarjeta.Paint += (s, e) =>
+        {
+            if (s is not Panel pnl) return;
+            var g = e.Graphics;
+            using var pen = new Pen(Color.FromArgb(229, 231, 235), 1);
+            g.DrawRectangle(pen, 0, 0, pnl.Width - 1, pnl.Height - 1);
+            using var shadow = new SolidBrush(Color.FromArgb(8, 0, 0, 0));
+            g.FillRectangle(shadow, 2, 2, pnl.Width - 2, 3);
+        };
+
+        string inicial = p.Nombre.Length > 0 ? p.Nombre[..1].ToUpperInvariant() : "?";
+        Color colorAvatar = p.EsBorrador ? Color.FromArgb(245, 158, 11) : Color.FromArgb(47, 124, 246);
+        Panel avatar = new()
+        {
+            Location = new Point(12, 14),
+            Size = new Size(48, 48),
+            BackColor = colorAvatar
+        };
+        avatar.Paint += (s, e) =>
+        {
+            if (s is not Panel a) return;
+            var g = e.Graphics;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            using var brush = new SolidBrush(a.BackColor);
+            g.FillEllipse(brush, 0, 0, a.Width - 1, a.Height - 1);
+            using var f = new Font("Segoe UI", 16F, FontStyle.Bold);
+            g.DrawString(inicial, f, Brushes.White, 12, 10);
+        };
+        tarjeta.Controls.Add(avatar);
+
+        int edad = p.FechaNacimiento == default ? 0 : CalcularEdad(p.FechaNacimiento);
+        string edadStr = edad > 0 ? $"{edad} anos" : "---";
+        Label lblNombre = new()
+        {
+            Text = $"{p.Nombre} {p.Apellido}".Trim(),
+            Location = new Point(74, 14),
+            Size = new Size(280, 24),
+            Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+            ForeColor = Color.FromArgb(17, 24, 39)
+        };
+        tarjeta.Controls.Add(lblNombre);
+
+        Label lblDetalle = new()
+        {
+            Text = $"{edadStr} | {TextoSeguro(p.Sexo, "---")} | Exp: {TextoSeguro(p.Expediente, "---")}",
+            Location = new Point(74, 40),
+            Size = new Size(340, 20),
+            Font = new Font("Segoe UI", 9F),
+            ForeColor = Color.FromArgb(107, 114, 128)
+        };
+        tarjeta.Controls.Add(lblDetalle);
+
+        int registros = p.SignosVitales.Count;
+        Label lblRegistros = new()
+        {
+            Text = registros == 1 ? "1 registro" : $"{registros} registros",
+            Location = new Point(370, 16),
+            Size = new Size(80, 20),
+            Font = new Font("Segoe UI", 9F),
+            ForeColor = Color.FromArgb(107, 114, 128),
+            TextAlign = ContentAlignment.MiddleCenter
+        };
+        tarjeta.Controls.Add(lblRegistros);
+
+        Panel badge = new()
+        {
+            Location = new Point(370, 40),
+            Size = new Size(80, 20),
+            BackColor = p.EsBorrador ? Color.FromArgb(254, 243, 199) : Color.FromArgb(209, 250, 229)
+        };
+        Label lblBadge = new()
+        {
+            Text = p.EsBorrador ? "BORRADOR" : "VALIDADO",
+            Location = new Point(0, 0),
+            Size = new Size(80, 20),
+            Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
+            ForeColor = p.EsBorrador ? Color.FromArgb(146, 64, 14) : Color.FromArgb(6, 95, 70),
+            TextAlign = ContentAlignment.MiddleCenter
+        };
+        badge.Controls.Add(lblBadge);
+        tarjeta.Controls.Add(badge);
+
+        Button btnConsultar = CrearBotonAccion("Consultar", Color.FromArgb(47, 124, 246), 476, 16);
+        btnConsultar.Click += (_, _) =>
+        {
+            SigemVista sv = new(usuario);
+            var completo = repositorio.BuscarPorIdentificador(p.Expediente) ?? repositorio.BuscarPorExpediente(p.Expediente);
+            if (completo is not null)
+            {
+                sv.MostrarPaciente(completo);
+                sv.SetUsuario(usuario);
+            }
+            sv.ShowDialog();
+            recargar();
+        };
+        tarjeta.Controls.Add(btnConsultar);
+
+        Button btnEditar = CrearBotonAccion("Editar", Color.FromArgb(245, 158, 11), 568, 16);
+        btnEditar.Click += (_, _) => MostrarEditorPaciente(p, recargar);
+        tarjeta.Controls.Add(btnEditar);
+
+        Button btnEliminar = CrearBotonAccion("Eliminar", Color.FromArgb(239, 68, 68), 660, 16);
+        btnEliminar.Click += (_, _) =>
+        {
+            string id = !string.IsNullOrWhiteSpace(p.Expediente) ? p.Expediente : p.Curp;
+            string nombre = $"{p.Nombre} {p.Apellido}".Trim();
+            var confirm = MessageBox.Show(
+                $"Eliminar paciente '{nombre}'?\n\nNo se podra recuperar esta informacion.",
+                "Confirmar eliminacion",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+            if (confirm == DialogResult.Yes && repositorio.EliminarPaciente(id))
+                recargar();
+        };
+        tarjeta.Controls.Add(btnEliminar);
+
+        return tarjeta;
+    }
+
+    private static Button CrearBotonAccion(string texto, Color color, int x, int y)
+    {
+        Button btn = new()
+        {
+            Text = texto,
+            Location = new Point(x, y),
+            Size = new Size(82, 28),
+            FlatStyle = FlatStyle.Flat,
+            BackColor = color,
+            ForeColor = Color.White,
+            Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
+            Cursor = Cursors.Hand,
+            FlatAppearance = { BorderSize = 0 }
+        };
+        return btn;
+    }
+
+    private void MostrarEditorPaciente(Paciente p, Action recargar)
+    {
+        Form editor = new()
+        {
+            Text = "Editar Paciente",
+            Size = new Size(520, 440),
+            StartPosition = FormStartPosition.CenterParent,
+            FormBorderStyle = FormBorderStyle.FixedDialog,
+            MaximizeBox = false,
+            MinimizeBox = false,
+            ShowInTaskbar = false,
+            BackColor = Color.White
+        };
+
+        Label lblExpediente = new() { Text = "Expediente:", Location = new Point(24, 20), Size = new Size(120, 24), Font = new Font("Segoe UI", 10F, FontStyle.Bold) };
+        TextBox txtExpediente = new() { Text = p.Expediente, Location = new Point(150, 18), Size = new Size(320, 28), Font = new Font("Segoe UI", 10F) };
+
+        Label lblCurp = new() { Text = "CURP:", Location = new Point(24, 58), Size = new Size(120, 24), Font = new Font("Segoe UI", 10F, FontStyle.Bold) };
+        TextBox txtCurp = new() { Text = p.Curp, Location = new Point(150, 56), Size = new Size(320, 28), Font = new Font("Segoe UI", 10F) };
+
+        Label lblNombre = new() { Text = "Nombre:", Location = new Point(24, 96), Size = new Size(120, 24), Font = new Font("Segoe UI", 10F, FontStyle.Bold) };
+        TextBox txtNombre = new() { Text = p.Nombre, Location = new Point(150, 94), Size = new Size(320, 28), Font = new Font("Segoe UI", 10F) };
+
+        Label lblApellido = new() { Text = "Apellido:", Location = new Point(24, 134), Size = new Size(120, 24), Font = new Font("Segoe UI", 10F, FontStyle.Bold) };
+        TextBox txtApellido = new() { Text = p.Apellido, Location = new Point(150, 132), Size = new Size(320, 28), Font = new Font("Segoe UI", 10F) };
+
+        Label lblFechaNac = new() { Text = "Fecha Nac.:", Location = new Point(24, 172), Size = new Size(120, 24), Font = new Font("Segoe UI", 10F, FontStyle.Bold) };
+        DateTimePicker dtpFecha = new() { Value = p.FechaNacimiento == default ? DateTime.Now.AddYears(-30) : p.FechaNacimiento, Location = new Point(150, 170), Size = new Size(180, 28), Font = new Font("Segoe UI", 10F) };
+
+        Label lblSexo = new() { Text = "Sexo:", Location = new Point(24, 210), Size = new Size(120, 24), Font = new Font("Segoe UI", 10F, FontStyle.Bold) };
+        ComboBox cmbSexo = new() { Text = p.Sexo, Location = new Point(150, 208), Size = new Size(180, 28), Font = new Font("Segoe UI", 10F), DropDownStyle = ComboBoxStyle.DropDownList };
+        cmbSexo.Items.AddRange(["Masculino", "Femenino"]);
+
+        Label lblTelefono = new() { Text = "Telefono:", Location = new Point(24, 248), Size = new Size(120, 24), Font = new Font("Segoe UI", 10F, FontStyle.Bold) };
+        TextBox txtTelefono = new() { Text = p.Telefono, Location = new Point(150, 246), Size = new Size(320, 28), Font = new Font("Segoe UI", 10F) };
+
+        Label lblDireccion = new() { Text = "Direccion:", Location = new Point(24, 286), Size = new Size(120, 24), Font = new Font("Segoe UI", 10F, FontStyle.Bold) };
+        TextBox txtDireccion = new() { Text = p.Direccion, Location = new Point(150, 284), Size = new Size(320, 28), Font = new Font("Segoe UI", 10F) };
+
+        Button btnGuardar = new()
+        {
+            Text = "Guardar Cambios",
+            Location = new Point(150, 330),
+            Size = new Size(160, 40),
+            FlatStyle = FlatStyle.Flat,
+            BackColor = Color.FromArgb(16, 185, 129),
+            ForeColor = Color.White,
+            Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+            Cursor = Cursors.Hand
+        };
+        btnGuardar.FlatAppearance.BorderSize = 0;
+
+        Button btnCancelar = new()
+        {
+            Text = "Cancelar",
+            Location = new Point(320, 330),
+            Size = new Size(150, 40),
+            FlatStyle = FlatStyle.Flat,
+            BackColor = Color.FromArgb(156, 163, 175),
+            ForeColor = Color.White,
+            Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+            Cursor = Cursors.Hand,
+            DialogResult = DialogResult.Cancel
+        };
+        btnCancelar.FlatAppearance.BorderSize = 0;
+
+        btnGuardar.Click += (_, _) =>
+        {
+            if (string.IsNullOrWhiteSpace(txtNombre.Text) || string.IsNullOrWhiteSpace(txtApellido.Text))
+            {
+                MessageBox.Show("Nombre y apellido son obligatorios.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            p.Nombre = txtNombre.Text.Trim();
+            p.Apellido = txtApellido.Text.Trim();
+            p.Curp = txtCurp.Text.Trim().ToUpperInvariant();
+            p.Expediente = txtExpediente.Text.Trim();
+            p.FechaNacimiento = dtpFecha.Value;
+            p.Sexo = cmbSexo.Text;
+            p.Telefono = txtTelefono.Text.Trim();
+            p.Direccion = txtDireccion.Text.Trim();
+
+            repositorio.GuardarPaciente(p);
+            editor.Close();
+            recargar();
+        };
+
+        editor.Controls.AddRange([lblExpediente, txtExpediente, lblCurp, txtCurp, lblNombre, txtNombre, lblApellido, txtApellido,
+            lblFechaNac, dtpFecha, lblSexo, cmbSexo, lblTelefono, txtTelefono, lblDireccion, txtDireccion, btnGuardar, btnCancelar]);
+        editor.CancelButton = btnCancelar;
+        editor.ShowDialog();
     }
 
     private void ConstruirFormularioDiagnostico()
@@ -572,7 +921,7 @@ public partial class MenuPrincipalVista : Form
 
     private void CargarPanelPrincipal()
     {
-        List<Paciente> pacientes = repositorio.ObtenerTodos();
+        List<Paciente> pacientes = repositorio.ObtenerTodos(); 
         int totalSignosVitales = pacientes.Sum(paciente => paciente.SignosVitales.Count);
         int borradores = pacientes.Count(paciente => paciente.EsBorrador);
         int registrosHoy = pacientes.Sum(paciente =>
@@ -620,7 +969,7 @@ public partial class MenuPrincipalVista : Form
         return $"{expediente} / {curp} - {paciente.Nombre} {paciente.Apellido} ({estado})";
     }
 
-    // Gestión dinámica de colores. Respeta el verde lima/esmeralda si es Enfermera
+    // GestiÃ³n dinÃ¡mica de colores. Respeta el verde lima/esmeralda si es Enfermera
     private void SeleccionarBoton(Button botonActivo)
     {
         Button[] botones = [btnPanelPrincipal, btnPacientes, btnConsulta, btnAdministracion];
@@ -669,8 +1018,7 @@ public partial class MenuPrincipalVista : Form
 
     private void BtnCerrarSesion_Click(object sender, EventArgs e)
     {
-        LoginVista login = new();
-        login.Show();
+        CierreSesionSolicitado = true;
         Close();
     }
 
