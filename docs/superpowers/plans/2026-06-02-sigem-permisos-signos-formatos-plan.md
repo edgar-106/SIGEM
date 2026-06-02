@@ -21,7 +21,7 @@
 - Create: `SIGEM/Modelo/SignosVitalesVisualizacion.cs`
   - Responsabilidad: generar filas ordenadas para vista Nota de Evolucion, vista Historia Clinica y alertas de rango.
 - Modify: `SIGEM/Vista/MenuPrincipalVista.cs`
-  - Responsabilidad: usar `PermisosRol` para configurar menu, tarjetas y bloqueo de acciones.
+  - Responsabilidad: usar `PermisosRol` para configurar menu, tarjetas, bloqueo de acciones y cierre de sesion hacia login limpio.
 - Modify: `SIGEM/Presentador/SigemPresentador.cs`
   - Responsabilidad: usar el visualizador para mostrar historial ordenado y alertas despues de cargar/guardar.
 - Modify: `SIGEM/Vista/SigemVista.cs`
@@ -501,6 +501,60 @@ git commit -m "Mostrar signos vitales ordenados y alertas"
 ```
 
 ---
+### Task 4A: Cierre De Sesion A Login
+
+**Files:**
+- Modify: `SIGEM/Vista/MenuPrincipalVista.cs`
+
+- [ ] **Step 1: Verify current logout behavior**
+
+Inspect `BtnCerrarSesion_Click` and confirm it creates `LoginVista`, shows it, and closes the current menu. If the handler already does this, keep the behavior and only adjust if the form lifecycle prevents returning to login.
+
+Expected implementation shape:
+
+```csharp
+private void BtnCerrarSesion_Click(object sender, EventArgs e)
+{
+    LoginVista login = new();
+    login.Show();
+    Close();
+}
+```
+
+- [ ] **Step 2: Ensure login does not exit with closed menu**
+
+Confirm `LoginVista.AbrirMenuPrincipal` hides the login and closes it only after the opened menu closes:
+
+```csharp
+public void AbrirMenuPrincipal(Usuario usuario)
+{
+    MenuPrincipalVista menuPrincipal = new(usuario);
+    menuPrincipal.FormClosed += (_, _) => Close();
+    Hide();
+    menuPrincipal.Show();
+}
+```
+
+If this exact behavior is already present, do not change it. The accepted result is that closing session from `MenuPrincipalVista` opens a fresh login, then closes only the old hidden login tied to the old menu.
+
+- [ ] **Step 3: Build**
+
+Run: `dotnet build SIGEM.slnx`
+
+Expected: build passes or only unrelated pre-existing errors remain.
+
+- [ ] **Step 4: Commit task if changes were required**
+
+Run:
+
+```bash
+git add SIGEM/Vista/MenuPrincipalVista.cs SIGEM/Vista/LoginVista.cs
+git commit -m "Asegurar cierre de sesion al login"
+```
+
+If no code changes were required because behavior already exists, do not create an empty commit. Record the verification in the final summary.
+
+---
 
 ### Task 5: Verificacion Final
 
@@ -546,6 +600,7 @@ If no files changed, do not create an empty commit.
 
 ## Self-Review
 
-- Spec coverage: permisos por rol covered in Tasks 1 and 3; signos ordenados and two format modes covered in Tasks 2 and 4; identity-sensitive expansion omitted by leaving `Paciente` unchanged; alerts covered in Tasks 2 and 4; verification covered in Task 5.
+- Spec coverage: permisos por rol covered in Tasks 1 and 3; signos ordenados and two format modes covered in Tasks 2 and 4; logout covered in Task 4A; identity-sensitive expansion omitted by leaving `Paciente` unchanged; alerts covered in Tasks 2 and 4; verification covered in Task 5.
 - Placeholder scan: no TBD/TODO/fill-in placeholders remain. Commands and code snippets are concrete.
 - Type consistency: `PermisosRol`, `FormatoSignosVitales`, `AlertaSignosVitales`, and `SignosVitalesVisualizacion` are defined before being consumed.
+

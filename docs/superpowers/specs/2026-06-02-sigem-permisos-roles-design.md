@@ -10,6 +10,7 @@ Esta etapa incluye:
 
 - Centralizar permisos para Medico, Enfermera, Recepcionista y Administrador.
 - Ajustar el menu principal y acciones visibles segun permisos.
+- Asegurar que cerrar sesion cierre el menu actual y regrese al login para ingresar con otro rol.
 - Mantener los datos actuales del paciente sin ampliar identidad sensible.
 - Ordenar los signos vitales segun los formatos clinicos revisados.
 - Permitir visualizar signos vitales en una vista compatible con Nota de Evolucion.
@@ -201,6 +202,7 @@ Agregar alertas de rango simples en la capa de presentacion para mostrar adverte
 ## Manejo de errores
 
 - Si un usuario intenta abrir una seccion sin permiso desde codigo, mostrar mensaje claro y no ejecutar la accion.
+- Si el usuario cierra sesion, el menu actual debe cerrarse y debe abrirse una nueva pantalla de login limpia.
 - Si los signos vitales estan fuera de rango, mostrar advertencia visible, pero permitir guardar si los campos obligatorios son validos.
 - Si no hay registros de signos vitales para un paciente, la vista debe mostrar un mensaje vacio claro.
 - Si un formato Excel no esta disponible, SIGEM no debe fallar porque esta etapa solo define visualizacion interna, no exportacion obligatoria.
@@ -213,9 +215,11 @@ Verificar con pruebas o ejecucion manual:
 - La enfermera no ve administracion ni diagnosticos/tratamientos/recetas, pero puede capturar signos vitales y ver Nota de Evolucion.
 - La recepcionista puede alta/editar paciente basico y no puede ver/capturar signos vitales.
 - El administrador ve administracion y no puede capturar datos clinicos.
+- Cerrar sesion desde cualquier rol regresa al login y permite iniciar con otro rol sin reiniciar la aplicacion.
 - Los signos vitales aparecen en el orden de Nota de Evolucion.
 - La vista Historia Clinica muestra el resumen de signos esperado.
 - Las alertas de signos vitales aparecen cuando hay valores fuera de rango.
+- Cerrar sesion regresa al login y permite iniciar sesion con otro rol.
 - El proyecto compila despues de los cambios.
 
 ## Criterios de aceptacion
@@ -228,4 +232,6 @@ Verificar con pruebas o ejecucion manual:
 - Signos vitales se ordenan segun Nota de Evolucion.
 - Signos vitales se pueden visualizar como Nota de Evolucion y como resumen de Historia Clinica.
 - Signos vitales conserva historial, pendiente/validado y agrega advertencias simples.
+- Cerrar sesion regresa al login y permite iniciar sesion con otro rol.
 - El proyecto compila despues de los cambios.
+
