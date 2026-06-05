@@ -39,9 +39,9 @@ partial class LoginVista
         lblError = new Label();
         pnlCredenciales = new Panel();
         lblCredenciales = new Label();
-        btnTogglePassword = new Button();
         pnlContrasenaBorder = new Panel();
         txtContrasena = new TextBox();
+        btnTogglePassword = new Button();
         pnlUsuarioBorder = new Panel();
         txtUsuario = new TextBox();
         lblAcceso = new Label();
@@ -149,7 +149,7 @@ partial class LoginVista
         lblCredenciales.Name = "lblCredenciales";
         lblCredenciales.Size = new Size(543, 159);
         lblCredenciales.TabIndex = 0;
-        lblCredenciales.Text = "Credenciales de prueba:\r\n\r\n👨‍⚕️ Doctor      →  Usuario: admin      Contraseña: admin123\r\n👩‍⚕️ Enfermera  →  Usuario: enfermera  Contraseña: enfermera123";
+        lblCredenciales.Text = "Credenciales IMS:\r\n\r\n👨‍⚕️ Doctor      →  Usuario: doctor      Contraseña: doctor123\r\n👩‍⚕️ Enfermera  →  Usuario: enfermera  Contraseña: enfermera123";
         // 
         // btnIniciarSesion
         // 
@@ -167,24 +167,6 @@ partial class LoginVista
         btnIniciarSesion.Text = "Iniciar Sesión";
         btnIniciarSesion.UseVisualStyleBackColor = false;
         btnIniciarSesion.Click += BtnIniciarSesion_Click;
-        // 
-        // btnTogglePassword
-        // 
-        btnTogglePassword.BackColor = Color.Transparent;
-        btnTogglePassword.Cursor = Cursors.Hand;
-        btnTogglePassword.FlatAppearance.BorderSize = 0;
-        btnTogglePassword.FlatStyle = FlatStyle.Flat;
-        btnTogglePassword.Font = new Font("Segoe UI", 9F);
-        btnTogglePassword.ForeColor = Color.FromArgb(107, 114, 128);
-        btnTogglePassword.Location = new Point(506, -1);
-        btnTogglePassword.Margin = new Padding(3, 4, 3, 4);
-        btnTogglePassword.Name = "btnTogglePassword";
-        btnTogglePassword.Size = new Size(75, 64);
-        btnTogglePassword.TabIndex = 6;
-        btnTogglePassword.Text = "Mostrar";
-        btnTogglePassword.TextAlign = ContentAlignment.MiddleLeft;
-        btnTogglePassword.UseVisualStyleBackColor = false;
-        btnTogglePassword.Click += BtnTogglePassword_Click;
         // 
         // pnlContrasenaBorder
         // 
@@ -213,6 +195,24 @@ partial class LoginVista
         txtContrasena.KeyDown += TxtContrasena_KeyDown;
         txtContrasena.Leave += TxtContrasena_Leave;
         // 
+        // btnTogglePassword
+        // 
+        btnTogglePassword.BackColor = Color.Transparent;
+        btnTogglePassword.Cursor = Cursors.Hand;
+        btnTogglePassword.FlatAppearance.BorderSize = 0;
+        btnTogglePassword.FlatStyle = FlatStyle.Flat;
+        btnTogglePassword.Font = new Font("Segoe UI", 9F);
+        btnTogglePassword.ForeColor = Color.FromArgb(107, 114, 128);
+        btnTogglePassword.Location = new Point(506, -1);
+        btnTogglePassword.Margin = new Padding(3, 4, 3, 4);
+        btnTogglePassword.Name = "btnTogglePassword";
+        btnTogglePassword.Size = new Size(75, 64);
+        btnTogglePassword.TabIndex = 6;
+        btnTogglePassword.Text = "Mostrar";
+        btnTogglePassword.TextAlign = ContentAlignment.MiddleLeft;
+        btnTogglePassword.UseVisualStyleBackColor = false;
+        btnTogglePassword.Click += BtnTogglePassword_Click;
+        // 
         // pnlUsuarioBorder
         // 
         pnlUsuarioBorder.BackColor = Color.FromArgb(209, 213, 219);
@@ -234,6 +234,7 @@ partial class LoginVista
         txtUsuario.PlaceholderText = "👤  Nombre de usuario";
         txtUsuario.Size = new Size(544, 25);
         txtUsuario.TabIndex = 0;
+        txtUsuario.TextChanged += txtUsuario_TextChanged;
         txtUsuario.Enter += TxtUsuario_Enter;
         txtUsuario.Leave += TxtUsuario_Leave;
         // 

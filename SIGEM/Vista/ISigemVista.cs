@@ -12,6 +12,7 @@ public interface ISigemVista
     event EventHandler? CalcularSolicitado;
 
     string Expediente { get; }
+    string PacienteCurp { get; set; }
     string PacienteNombre { get; set; }
     string PacienteApellido { get; set; }
     DateTime PacienteFechaNacimiento { get; set; }

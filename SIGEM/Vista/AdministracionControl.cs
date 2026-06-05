@@ -4,30 +4,29 @@ namespace SIGEM.Vista;
 
 public class AdministracionControl : UserControl
 {
-    private Panel pnlScroll;
-    private Label lblTitulo, lblSubtitulo;
+    private Panel pnlScroll = null!;
+    private Label lblTitulo = null!, lblSubtitulo = null!;
 
     // Card Info Admin
-    private Panel pnlInfoAdmin;
-    private Label lblNombreL, lblCorreoL, lblTelefonoL;
-    private TextBox txtNombre, txtCorreo, txtTelefono;
-    private Button btnGuardarInfo;
+    private Panel pnlInfoAdmin = null!;
+    private TextBox txtNombre = null!, txtCorreo = null!, txtTelefono = null!;
+    private Button btnGuardarInfo = null!;
 
     // Card Contraseña
-    private Panel pnlPassword;
-    private TextBox txtPassActual, txtPassNueva, txtPassConfirm;
-    private Button btnActualizarPass;
+    private Panel pnlPassword = null!;
+    private TextBox txtPassActual = null!, txtPassNueva = null!, txtPassConfirm = null!;
+    private Button btnActualizarPass = null!;
 
     // Card Config General
-    private Panel pnlConfigGeneral;
-    private CheckBox chkNotificaciones, chkRespaldoAuto;
-    private ComboBox cmbTiempoSesion;
-    private Button btnGuardarConfig;
+    private Panel pnlConfigGeneral = null!;
+    private CheckBox chkNotificaciones = null!, chkRespaldoAuto = null!;
+    private ComboBox cmbTiempoSesion = null!;
+    private Button btnGuardarConfig = null!;
 
     // Card Base de Datos
-    private Panel pnlBaseDatos;
-    private Label lblUltimoRespaldo, lblTamanoBD;
-    private Button btnCrearRespaldo, btnRestaurar, btnLimpiar;
+    private Panel pnlBaseDatos = null!;
+    private Label lblUltimoRespaldo = null!, lblTamanoBD = null!;
+    private Button btnCrearRespaldo = null!, btnRestaurar = null!, btnLimpiar = null!;
 
     public AdministracionControl()
     {
@@ -382,7 +381,7 @@ public class AdministracionControl : UserControl
 
         lblUltimoRespaldo = new Label
         {
-            Text = "Último respaldo: 22/04/2026 - 08:00 AM",
+            Text = "Base de datos IMS: pacientes.json",
             Font = new Font("Segoe UI", 9.5F),
             ForeColor = Color.FromArgb(55, 65, 81),
             AutoSize = true,
@@ -390,7 +389,7 @@ public class AdministracionControl : UserControl
         };
         lblTamanoBD = new Label
         {
-            Text = "Tamaño de base de datos: 45.2 MB",
+            Text = $"Tamaño de base de datos: {ObtenerTamanoBaseDatos()}",
             Font = new Font("Segoe UI", 9.5F),
             ForeColor = Color.FromArgb(55, 65, 81),
             AutoSize = true,
@@ -405,7 +404,9 @@ public class AdministracionControl : UserControl
         btnCrearRespaldo = CrearBoton("Crear Respaldo Manual", Color.FromArgb(22, 163, 74), 24, y, 322);
         btnCrearRespaldo.Click += (s, e) =>
         {
-            lblUltimoRespaldo.Text = $"Último respaldo: {DateTime.Now:dd/MM/yyyy - hh:mm tt}";
+            CrearRespaldoIms();
+            lblUltimoRespaldo.Text = $"Último respaldo IMS: {DateTime.Now:dd/MM/yyyy - hh:mm tt}";
+            lblTamanoBD.Text = $"Tamaño de base de datos: {ObtenerTamanoBaseDatos()}";
             MessageBox.Show("Respaldo creado correctamente.", "SIGEM",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         };
@@ -432,5 +433,34 @@ public class AdministracionControl : UserControl
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
         };
         pnlBaseDatos.Controls.Add(btnLimpiar);
+    }
+
+    private static string ObtenerRutaBaseDatosIms()
+    {
+        return Path.Combine(AppContext.BaseDirectory, "Datos", "ims", "pacientes.json");
+    }
+
+    private static string ObtenerTamanoBaseDatos()
+    {
+        string ruta = ObtenerRutaBaseDatosIms();
+        if (!File.Exists(ruta))
+            return "0 KB";
+
+        double kb = new FileInfo(ruta).Length / 1024.0;
+        return kb >= 1024 ? $"{kb / 1024.0:F2} MB" : $"{kb:F1} KB";
+    }
+
+    private static void CrearRespaldoIms()
+    {
+        string ruta = ObtenerRutaBaseDatosIms();
+        Directory.CreateDirectory(Path.GetDirectoryName(ruta)!);
+
+        if (!File.Exists(ruta))
+            File.WriteAllText(ruta, "[]");
+
+        string carpetaRespaldos = Path.Combine(AppContext.BaseDirectory, "Datos", "ims", "respaldos");
+        Directory.CreateDirectory(carpetaRespaldos);
+        string respaldo = Path.Combine(carpetaRespaldos, $"pacientes_{DateTime.Now:yyyyMMdd_HHmmss}.json");
+        File.Copy(ruta, respaldo, overwrite: true);
     }
 }

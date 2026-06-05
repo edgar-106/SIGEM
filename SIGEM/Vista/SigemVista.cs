@@ -29,6 +29,9 @@ public partial class SigemVista : Form, ISigemVista
     public string Expediente => txtExpediente.Text.Trim();
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public string PacienteCurp { get => txtCurp.Text.Trim().ToUpperInvariant(); set => txtCurp.Text = value; }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string PacienteNombre { get => txtPacienteNombre.Text.Trim(); set => txtPacienteNombre.Text = value; }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -85,6 +88,8 @@ public partial class SigemVista : Form, ISigemVista
 
     public void MostrarPaciente(Paciente paciente)
     {
+        LimpiarCamposSignosVitales();
+        txtCurp.Text = paciente.Curp;
         txtPacienteNombre.Text = paciente.Nombre;
         txtPacienteApellido.Text = paciente.Apellido;
         dtpFechaNacimiento.Value = paciente.FechaNacimiento == default ? DateTime.Now.AddYears(-30) : paciente.FechaNacimiento;
@@ -137,20 +142,13 @@ public partial class SigemVista : Form, ISigemVista
     public void LimpiarFormulario()
     {
         txtExpediente.Clear();
+        txtCurp.Clear();
         txtPacienteNombre.Clear();
         txtPacienteApellido.Clear();
         dtpFechaNacimiento.Value = DateTime.Now.AddYears(-30);
         cmbSexo.SelectedIndex = -1;
         txtTelefono.Clear();
-        txtPeso.Clear();
-        txtEstatura.Clear();
-        txtTemperatura.Clear();
-        txtPulso.Clear();
-        txtFrecResp.Clear();
-        txtPresionSistolica.Clear();
-        txtPresionDiastolica.Clear();
-        txtCC.Clear();
-        txtSaturacion.Clear();
+        LimpiarCamposSignosVitales();
         lblValorIMC.Text = "--";
         lblValorPAM.Text = "--";
         lblEstado.Text = string.Empty;
@@ -164,6 +162,7 @@ public partial class SigemVista : Form, ISigemVista
 
     public void HabilitarCamposPaciente(bool habilitar)
     {
+        txtCurp.Enabled = habilitar;
         txtPacienteNombre.Enabled = habilitar;
         txtPacienteApellido.Enabled = habilitar;
         dtpFechaNacimiento.Enabled = habilitar;
@@ -201,6 +200,21 @@ public partial class SigemVista : Form, ISigemVista
     private void Recalcular()
     {
         CalcularSolicitado?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void LimpiarCamposSignosVitales()
+    {
+        txtPeso.Clear();
+        txtEstatura.Clear();
+        txtTemperatura.Clear();
+        txtPulso.Clear();
+        txtFrecResp.Clear();
+        txtPresionSistolica.Clear();
+        txtPresionDiastolica.Clear();
+        txtCC.Clear();
+        txtSaturacion.Clear();
+        lblValorIMC.Text = "--";
+        lblValorPAM.Text = "--";
     }
 
     private void BtnBuscar_Click(object sender, EventArgs e)

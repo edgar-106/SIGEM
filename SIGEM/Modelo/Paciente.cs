@@ -3,6 +3,7 @@ namespace SIGEM.Modelo;
 public class Paciente
 {
     public string Expediente { get; set; } = string.Empty;
+    public string Curp { get; set; } = string.Empty;
     public string Nombre { get; set; } = string.Empty;
     public string Apellido { get; set; } = string.Empty;
     public DateTime FechaNacimiento { get; set; }
