@@ -33,6 +33,7 @@ public interface ISigemVista
     void MostrarPaciente(Paciente paciente);
     void MostrarCalculos(double imc, double pam);
     void MostrarHistorial(IReadOnlyList<string> registros);
+    void MostrarAlertasSignosVitales(IReadOnlyList<string> alertas);
     void MostrarMensaje(string mensaje);
     void MostrarError(string mensaje);
     void LimpiarFormulario();

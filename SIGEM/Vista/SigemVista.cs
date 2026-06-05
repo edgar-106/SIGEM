@@ -11,7 +11,7 @@ public partial class SigemVista : Form, ISigemVista
     public SigemVista(Usuario usuario)
     {
         InitializeComponent();
-        presentador = new SigemPresentador(this, new SigemRepositorioJson(), usuario);
+        presentador = new SigemPresentador(this, ConexionBD.CrearRepositorio(), usuario);
 
         txtPeso.TextChanged += (_, _) => Recalcular();
         txtEstatura.TextChanged += (_, _) => Recalcular();
@@ -125,6 +125,18 @@ public partial class SigemVista : Form, ISigemVista
     {
         lstHistorial.DataSource = null;
         lstHistorial.DataSource = registros;
+    }
+
+    public void MostrarAlertasSignosVitales(IReadOnlyList<string> alertas)
+    {
+        if (alertas.Count == 0)
+        {
+            lblEstado.ForeColor = Color.FromArgb(38, 120, 79);
+            return;
+        }
+
+        lblEstado.ForeColor = Color.FromArgb(217, 119, 6);
+        lblEstado.Text = "Advertencias: " + string.Join(" | ", alertas);
     }
 
     public void MostrarMensaje(string mensaje)

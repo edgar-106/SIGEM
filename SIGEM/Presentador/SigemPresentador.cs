@@ -1,4 +1,4 @@
-using SIGEM.Modelo;
+﻿using SIGEM.Modelo;
 using SIGEM.Vista;
 
 namespace SIGEM.Presentador;
@@ -56,6 +56,7 @@ public class SigemPresentador
         vista.MostrarMensaje($"Paciente encontrado: {paciente.Nombre} {paciente.Apellido}");
 
         ActualizarHistorial(paciente);
+        MostrarAlertasDelUltimoRegistro(paciente);
 
         if (usuario.Rol == RolUsuario.Doctor && paciente.EsBorrador)
         {
@@ -120,9 +121,15 @@ public class SigemPresentador
             return;
         }
 
+        bool actualizarPendienteEnfermeria = PuedeActualizarUltimoPendiente();
+        int indicePendiente = pacienteActual.SignosVitales.Count - 1;
+        DateTime fechaRegistro = actualizarPendienteEnfermeria
+            ? pacienteActual.SignosVitales[indicePendiente].FechaHora
+            : DateTime.Now;
+
         var sv = new SignosVitales
         {
-            FechaHora = DateTime.Now,
+            FechaHora = fechaRegistro,
             Peso = vista.Peso,
             Estatura = vista.Estatura,
             Temperatura = vista.Temperatura,
@@ -134,7 +141,8 @@ public class SigemPresentador
             SaturacionO2 = vista.SaturacionO2,
             RegistradoPor = vista.UsuarioActual,
             Validado = usuario.Rol == RolUsuario.Doctor,
-            ValidadoPor = usuario.Rol == RolUsuario.Doctor ? vista.UsuarioActual : null
+            ValidadoPor = usuario.Rol == RolUsuario.Doctor ? vista.UsuarioActual : null,
+            IdDoctor = usuario.Rol == RolUsuario.Doctor ? usuario.IdDoctor : null
         };
 
         if (esNuevoPaciente)
@@ -150,7 +158,10 @@ public class SigemPresentador
         }
         else
         {
-            repositorio.AgregarSignosVitales(pacienteActual.Expediente, sv);
+            if (actualizarPendienteEnfermeria)
+                repositorio.ActualizarSignosVitales(pacienteActual.Expediente, indicePendiente, sv);
+            else
+                repositorio.AgregarSignosVitales(pacienteActual.Expediente, sv);
         }
 
         pacienteActual = repositorio.BuscarPorIdentificador(pacienteActual.Curp) ??
@@ -160,12 +171,17 @@ public class SigemPresentador
         {
             vista.MostrarMensaje("Signos vitales guardados como borrador. El doctor los validará.");
         }
+        else if (actualizarPendienteEnfermeria)
+        {
+            vista.MostrarMensaje("Registro de enfermeria corregido y validado por el medico.");
+        }
         else
         {
             vista.MostrarMensaje("Registro guardado y validado correctamente.");
         }
 
         ActualizarHistorial(pacienteActual!);
+        MostrarAlertasDelUltimoRegistro(pacienteActual!);
         vista.HabilitarCamposPaciente(false);
     }
 
@@ -217,6 +233,15 @@ public class SigemPresentador
         vista.LimpiarFormulario();
     }
 
+    private bool PuedeActualizarUltimoPendiente()
+    {
+        return usuario.Rol == RolUsuario.Doctor &&
+               !esNuevoPaciente &&
+               pacienteActual is not null &&
+               pacienteActual.SignosVitales.Count > 0 &&
+               !pacienteActual.SignosVitales[^1].Validado;
+    }
+
     private string? ValidarCampos()
     {
         if (esNuevoPaciente)
@@ -241,25 +266,59 @@ public class SigemPresentador
         if (vista.PresionSistolica <= 0) return "La presión sistólica debe ser mayor a 0.";
         if (vista.PresionDiastolica <= 0) return "La presión diastólica debe ser mayor a 0.";
         if (vista.CC <= 0) return "La CC debe ser mayor a 0.";
-        if (vista.SaturacionO2 <= 0) return "La saturación de O₂ debe ser mayor a 0.";
+        if (vista.SaturacionO2 <= 0) return "La saturación de O2 debe ser mayor a 0.";
 
         return null;
     }
 
     private void ActualizarHistorial(Paciente paciente)
     {
-        var registros = paciente.SignosVitales
-            .Select((sv, i) =>
-            {
-                string validacion = sv.Validado
-                    ? $" [Validado por: {sv.ValidadoPor}]"
-                    : " [Pendiente]";
-                return $"#{i + 1} - {sv.FechaHora:dd/MM/yyyy HH:mm} | Peso:{sv.Peso}kg Talla:{sv.Estatura}m Temp:{sv.Temperatura}°C FC:{sv.Pulso} FR:{sv.FrecuenciaRespiratoria} PA:{sv.PresionSistolica}/{sv.PresionDiastolica} CC:{sv.CC}cm SpO₂:{sv.SaturacionO2}% IMC:{sv.IMC} PAM:{sv.PAM}{validacion}";
-            })
-            .Reverse()
+        var signosOrdenados = paciente.SignosVitales
+            .OrderByDescending(sv => sv.FechaHora)
             .ToList();
 
+        var registros = new List<string>();
+        if (signosOrdenados.Count > 0)
+        {
+            registros.Add("Formato Excel: NOTA_DE_EVOLUCION AM.xls");
+            registros.AddRange(signosOrdenados.Select((sv, i) => FormatearRegistroNotaEvolucion(i + 1, sv)));
+            registros.Add(string.Empty);
+            registros.Add("Formato Excel: HISTORIA_CLINICA_GENERAL AM.xls - resumen del ultimo registro");
+            registros.Add(FormatearRegistroHistoriaClinica(signosOrdenados[0]));
+        }
+
         vista.MostrarHistorial(registros);
+    }
+
+    private void MostrarAlertasDelUltimoRegistro(Paciente paciente)
+    {
+        var ultimo = paciente.SignosVitales.OrderByDescending(sv => sv.FechaHora).FirstOrDefault();
+        if (ultimo is null)
+        {
+            vista.MostrarAlertasSignosVitales([]);
+            return;
+        }
+
+        var alertas = SignosVitalesVisualizacion.CrearAlertas(ultimo)
+            .Select(alerta => $"{alerta.Campo}: {alerta.Valor}")
+            .ToList();
+        vista.MostrarAlertasSignosVitales(alertas);
+    }
+
+    private static string FormatearRegistroNotaEvolucion(int indice, SignosVitales signos)
+    {
+        string datos = string.Join(" | ", SignosVitalesVisualizacion
+            .CrearFilas(signos, FormatoSignosVitales.NotaEvolucion)
+            .Select(fila => $"{fila.Etiqueta}: {fila.Valor}"));
+
+        return $"#{indice} - {datos}";
+    }
+
+    private static string FormatearRegistroHistoriaClinica(SignosVitales signos)
+    {
+        return string.Join(" | ", SignosVitalesVisualizacion
+            .CrearFilas(signos, FormatoSignosVitales.HistoriaClinica)
+            .Select(fila => $"{fila.Etiqueta}: {fila.Valor}"));
     }
 
     private static bool EsCurp(string identificador)

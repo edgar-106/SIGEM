@@ -2,6 +2,7 @@ using SIGEM.Modelo;
 
 namespace SIGEM.Vista;
 
+
 public partial class MenuPrincipalVista : Form
 {
     private readonly Usuario usuario;
