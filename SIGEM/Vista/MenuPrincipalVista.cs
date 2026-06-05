@@ -20,8 +20,7 @@ public partial class MenuPrincipalVista : Form
         VerificarPermisosPorRol();
 
         MostrarPanelPrincipal();
-        // Solo el administrador ve el botón
-        btnAdministracion.Visible = usuario.Rol == RolUsuario.Administrador;
+        // Solo el administrador ve el botï¿½n
         btnAdministracion.Visible = usuario.Rol == RolUsuario.Administrador;
         btnPacientes.Visible = usuario.Rol != RolUsuario.Administrador;
         btnConsulta.Visible = usuario.Rol != RolUsuario.Administrador;
@@ -312,15 +311,329 @@ public partial class MenuPrincipalVista : Form
         contenedor.AutoScroll = true;
         pnlContenido.Controls.Add(contenedor);
 
-        SigemVista vistaSignos = new(usuario)
+        Panel pnlBusqueda = new()
         {
-            TopLevel = false,
-            FormBorderStyle = FormBorderStyle.None,
-            Dock = DockStyle.Fill
+            Location = new Point(28, 48),
+            Size = new Size(580, 40),
+            BackColor = Color.FromArgb(243, 244, 246),
+            BorderStyle = BorderStyle.FixedSingle
         };
-        formularioEmbebido = vistaSignos;
-        contenedor.Controls.Add(vistaSignos);
-        vistaSignos.Show();
+        TextBox buscador = new()
+        {
+            Location = new Point(12, 8),
+            Size = new Size(550, 28),
+            Font = new Font("Segoe UI", 11F),
+            BorderStyle = BorderStyle.None,
+            BackColor = Color.FromArgb(243, 244, 246),
+            PlaceholderText = "Buscar paciente por nombre, expediente o CURP..."
+        };
+        pnlBusqueda.Controls.Add(buscador);
+        contenedor.Controls.Add(pnlBusqueda);
+
+        Label lblContador = new()
+        {
+            Location = new Point(28, 96),
+            Size = new Size(400, 20),
+            Font = new Font("Segoe UI", 9F),
+            ForeColor = Color.FromArgb(156, 163, 175)
+        };
+        contenedor.Controls.Add(lblContador);
+
+        FlowLayoutPanel lista = new()
+        {
+            Location = new Point(28, 120),
+            Size = new Size(880, 490),
+            AutoScroll = true,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            BackColor = Color.White
+        };
+        contenedor.Controls.Add(lista);
+
+        Button btnNuevo = CrearBotonPrimario("+ Nuevo Paciente", 628, 46, 280, 42);
+        btnNuevo.BackColor = Color.FromArgb(16, 185, 129);
+        contenedor.Controls.Add(btnNuevo);
+
+        void CargarTarjetas(string filtro)
+        {
+            lista.Controls.Clear();
+            List<Paciente> pacientes = repositorio.ObtenerTodos();
+
+            if (!string.IsNullOrWhiteSpace(filtro))
+            {
+                pacientes = pacientes.Where(p =>
+                    (p.Nombre + " " + p.Apellido).Contains(filtro, StringComparison.OrdinalIgnoreCase) ||
+                    (p.Expediente ?? "").Contains(filtro, StringComparison.OrdinalIgnoreCase) ||
+                    (p.Curp ?? "").Contains(filtro, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            lblContador.Text = pacientes.Count == 1
+                ? "1 paciente encontrado"
+                : $"{pacientes.Count} pacientes encontrados";
+
+            if (pacientes.Count == 0)
+            {
+                Panel empty = CrearTarjetaVacia("No hay pacientes registrados. Use el boton \"+ Nuevo Paciente\" para crear uno.");
+                lista.Controls.Add(empty);
+                return;
+            }
+
+            foreach (Paciente p in pacientes.OrderByDescending(p => p.FechaRegistro))
+            {
+                lista.Controls.Add(CrearTarjetaCrud(p, () => CargarTarjetas(buscador.Text)));
+            }
+        }
+
+        btnNuevo.Click += (_, _) =>
+        {
+            SigemVista sv = new(usuario);
+            sv.SetUsuario(usuario);
+            sv.EstablecerModoNuevoPaciente();
+            sv.ShowDialog();
+            CargarTarjetas(buscador.Text);
+        };
+
+        buscador.TextChanged += (_, _) => CargarTarjetas(buscador.Text);
+        buscador.KeyDown += (_, e) =>
+        {
+            if (e.KeyCode == Keys.Enter) e.SuppressKeyPress = true;
+        };
+        CargarTarjetas(string.Empty);
+    }
+
+    private Panel CrearTarjetaCrud(Paciente p, Action recargar)
+    {
+        Panel tarjeta = new()
+        {
+            Size = new Size(850, 76),
+            BackColor = Color.White,
+            Margin = new Padding(0, 0, 0, 10)
+        };
+        tarjeta.Paint += (s, e) =>
+        {
+            if (s is not Panel pnl) return;
+            var g = e.Graphics;
+            using var pen = new Pen(Color.FromArgb(229, 231, 235), 1);
+            g.DrawRectangle(pen, 0, 0, pnl.Width - 1, pnl.Height - 1);
+            using var shadow = new SolidBrush(Color.FromArgb(8, 0, 0, 0));
+            g.FillRectangle(shadow, 2, 2, pnl.Width - 2, 3);
+        };
+
+        string inicial = p.Nombre.Length > 0 ? p.Nombre[..1].ToUpperInvariant() : "?";
+        Color colorAvatar = p.EsBorrador ? Color.FromArgb(245, 158, 11) : Color.FromArgb(47, 124, 246);
+        Panel avatar = new()
+        {
+            Location = new Point(12, 14),
+            Size = new Size(48, 48),
+            BackColor = colorAvatar
+        };
+        avatar.Paint += (s, e) =>
+        {
+            if (s is not Panel a) return;
+            var g = e.Graphics;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            using var brush = new SolidBrush(a.BackColor);
+            g.FillEllipse(brush, 0, 0, a.Width - 1, a.Height - 1);
+            using var f = new Font("Segoe UI", 16F, FontStyle.Bold);
+            g.DrawString(inicial, f, Brushes.White, 12, 10);
+        };
+        tarjeta.Controls.Add(avatar);
+
+        int edad = p.FechaNacimiento == default ? 0 : CalcularEdad(p.FechaNacimiento);
+        string edadStr = edad > 0 ? $"{edad} anos" : "---";
+        Label lblNombre = new()
+        {
+            Text = $"{p.Nombre} {p.Apellido}".Trim(),
+            Location = new Point(74, 14),
+            Size = new Size(280, 24),
+            Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+            ForeColor = Color.FromArgb(17, 24, 39)
+        };
+        tarjeta.Controls.Add(lblNombre);
+
+        Label lblDetalle = new()
+        {
+            Text = $"{edadStr} | {TextoSeguro(p.Sexo, "---")} | Exp: {TextoSeguro(p.Expediente, "---")}",
+            Location = new Point(74, 40),
+            Size = new Size(340, 20),
+            Font = new Font("Segoe UI", 9F),
+            ForeColor = Color.FromArgb(107, 114, 128)
+        };
+        tarjeta.Controls.Add(lblDetalle);
+
+        int registros = p.SignosVitales.Count;
+        Label lblRegistros = new()
+        {
+            Text = registros == 1 ? "1 registro" : $"{registros} registros",
+            Location = new Point(370, 16),
+            Size = new Size(80, 20),
+            Font = new Font("Segoe UI", 9F),
+            ForeColor = Color.FromArgb(107, 114, 128),
+            TextAlign = ContentAlignment.MiddleCenter
+        };
+        tarjeta.Controls.Add(lblRegistros);
+
+        Panel badge = new()
+        {
+            Location = new Point(370, 40),
+            Size = new Size(80, 20),
+            BackColor = p.EsBorrador ? Color.FromArgb(254, 243, 199) : Color.FromArgb(209, 250, 229)
+        };
+        Label lblBadge = new()
+        {
+            Text = p.EsBorrador ? "BORRADOR" : "VALIDADO",
+            Location = new Point(0, 0),
+            Size = new Size(80, 20),
+            Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
+            ForeColor = p.EsBorrador ? Color.FromArgb(146, 64, 14) : Color.FromArgb(6, 95, 70),
+            TextAlign = ContentAlignment.MiddleCenter
+        };
+        badge.Controls.Add(lblBadge);
+        tarjeta.Controls.Add(badge);
+
+        Button btnConsultar = CrearBotonAccion("Consultar", Color.FromArgb(47, 124, 246), 476, 16);
+        btnConsultar.Click += (_, _) =>
+        {
+            SigemVista sv = new(usuario);
+            var completo = repositorio.BuscarPorIdentificador(p.Expediente) ?? repositorio.BuscarPorExpediente(p.Expediente);
+            if (completo is not null)
+            {
+                sv.MostrarPaciente(completo);
+                sv.SetUsuario(usuario);
+            }
+            sv.ShowDialog();
+            recargar();
+        };
+        tarjeta.Controls.Add(btnConsultar);
+
+        Button btnEditar = CrearBotonAccion("Editar", Color.FromArgb(245, 158, 11), 568, 16);
+        btnEditar.Click += (_, _) => MostrarEditorPaciente(p, recargar);
+        tarjeta.Controls.Add(btnEditar);
+
+        Button btnEliminar = CrearBotonAccion("Eliminar", Color.FromArgb(239, 68, 68), 660, 16);
+        btnEliminar.Click += (_, _) =>
+        {
+            string id = !string.IsNullOrWhiteSpace(p.Expediente) ? p.Expediente : p.Curp;
+            string nombre = $"{p.Nombre} {p.Apellido}".Trim();
+            var confirm = MessageBox.Show(
+                $"Eliminar paciente '{nombre}'?\n\nNo se podra recuperar esta informacion.",
+                "Confirmar eliminacion",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+            if (confirm == DialogResult.Yes && repositorio.EliminarPaciente(id))
+                recargar();
+        };
+        tarjeta.Controls.Add(btnEliminar);
+
+        return tarjeta;
+    }
+
+    private static Button CrearBotonAccion(string texto, Color color, int x, int y)
+    {
+        Button btn = new()
+        {
+            Text = texto,
+            Location = new Point(x, y),
+            Size = new Size(82, 28),
+            FlatStyle = FlatStyle.Flat,
+            BackColor = color,
+            ForeColor = Color.White,
+            Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
+            Cursor = Cursors.Hand,
+            FlatAppearance = { BorderSize = 0 }
+        };
+        return btn;
+    }
+
+    private void MostrarEditorPaciente(Paciente p, Action recargar)
+    {
+        Form editor = new()
+        {
+            Text = "Editar Paciente",
+            Size = new Size(520, 440),
+            StartPosition = FormStartPosition.CenterParent,
+            FormBorderStyle = FormBorderStyle.FixedDialog,
+            MaximizeBox = false,
+            MinimizeBox = false,
+            ShowInTaskbar = false,
+            BackColor = Color.White
+        };
+
+        Label lblExpediente = new() { Text = "Expediente:", Location = new Point(24, 20), Size = new Size(120, 24), Font = new Font("Segoe UI", 10F, FontStyle.Bold) };
+        TextBox txtExpediente = new() { Text = p.Expediente, Location = new Point(150, 18), Size = new Size(320, 28), Font = new Font("Segoe UI", 10F) };
+
+        Label lblCurp = new() { Text = "CURP:", Location = new Point(24, 58), Size = new Size(120, 24), Font = new Font("Segoe UI", 10F, FontStyle.Bold) };
+        TextBox txtCurp = new() { Text = p.Curp, Location = new Point(150, 56), Size = new Size(320, 28), Font = new Font("Segoe UI", 10F) };
+
+        Label lblNombre = new() { Text = "Nombre:", Location = new Point(24, 96), Size = new Size(120, 24), Font = new Font("Segoe UI", 10F, FontStyle.Bold) };
+        TextBox txtNombre = new() { Text = p.Nombre, Location = new Point(150, 94), Size = new Size(320, 28), Font = new Font("Segoe UI", 10F) };
+
+        Label lblApellido = new() { Text = "Apellido:", Location = new Point(24, 134), Size = new Size(120, 24), Font = new Font("Segoe UI", 10F, FontStyle.Bold) };
+        TextBox txtApellido = new() { Text = p.Apellido, Location = new Point(150, 132), Size = new Size(320, 28), Font = new Font("Segoe UI", 10F) };
+
+        Label lblFechaNac = new() { Text = "Fecha Nac.:", Location = new Point(24, 172), Size = new Size(120, 24), Font = new Font("Segoe UI", 10F, FontStyle.Bold) };
+        DateTimePicker dtpFecha = new() { Value = p.FechaNacimiento == default ? DateTime.Now.AddYears(-30) : p.FechaNacimiento, Location = new Point(150, 170), Size = new Size(180, 28), Font = new Font("Segoe UI", 10F) };
+
+        Label lblSexo = new() { Text = "Sexo:", Location = new Point(24, 210), Size = new Size(120, 24), Font = new Font("Segoe UI", 10F, FontStyle.Bold) };
+        ComboBox cmbSexo = new() { Text = p.Sexo, Location = new Point(150, 208), Size = new Size(180, 28), Font = new Font("Segoe UI", 10F), DropDownStyle = ComboBoxStyle.DropDownList };
+        cmbSexo.Items.AddRange(["Masculino", "Femenino"]);
+
+        Label lblDireccion = new() { Text = "Direccion:", Location = new Point(24, 248), Size = new Size(120, 24), Font = new Font("Segoe UI", 10F, FontStyle.Bold) };
+        TextBox txtDireccion = new() { Text = p.Direccion, Location = new Point(150, 246), Size = new Size(320, 28), Font = new Font("Segoe UI", 10F) };
+
+        Button btnGuardar = new()
+        {
+            Text = "Guardar Cambios",
+            Location = new Point(150, 330),
+            Size = new Size(160, 40),
+            FlatStyle = FlatStyle.Flat,
+            BackColor = Color.FromArgb(16, 185, 129),
+            ForeColor = Color.White,
+            Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+            Cursor = Cursors.Hand
+        };
+        btnGuardar.FlatAppearance.BorderSize = 0;
+
+        Button btnCancelar = new()
+        {
+            Text = "Cancelar",
+            Location = new Point(320, 330),
+            Size = new Size(150, 40),
+            FlatStyle = FlatStyle.Flat,
+            BackColor = Color.FromArgb(156, 163, 175),
+            ForeColor = Color.White,
+            Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+            Cursor = Cursors.Hand,
+            DialogResult = DialogResult.Cancel
+        };
+        btnCancelar.FlatAppearance.BorderSize = 0;
+
+        btnGuardar.Click += (_, _) =>
+        {
+            if (string.IsNullOrWhiteSpace(txtNombre.Text) || string.IsNullOrWhiteSpace(txtApellido.Text))
+            {
+                MessageBox.Show("Nombre y apellido son obligatorios.", "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            p.Nombre = txtNombre.Text.Trim();
+            p.Apellido = txtApellido.Text.Trim();
+            p.Curp = txtCurp.Text.Trim().ToUpperInvariant();
+            p.Expediente = txtExpediente.Text.Trim();
+            p.FechaNacimiento = dtpFecha.Value;
+            p.Sexo = cmbSexo.Text;
+            p.Direccion = txtDireccion.Text.Trim();
+
+            repositorio.GuardarPaciente(p);
+            editor.Close();
+            recargar();
+        };
+
+        editor.Controls.AddRange([lblExpediente, txtExpediente, lblCurp, txtCurp, lblNombre, txtNombre, lblApellido, txtApellido,
+            lblFechaNac, dtpFecha, lblSexo, cmbSexo, lblDireccion, txtDireccion, btnGuardar, btnCancelar]);
+        editor.CancelButton = btnCancelar;
+        editor.ShowDialog();
     }
 
     private void ConstruirFormularioDiagnostico()
@@ -379,7 +692,7 @@ public partial class MenuPrincipalVista : Form
         if (string.IsNullOrWhiteSpace(filtro))
             return true;
 
-        string texto = $"{paciente.Expediente} {paciente.Curp} {paciente.Nombre} {paciente.Apellido} {paciente.Telefono} {paciente.Sexo} {paciente.Direccion}";
+        string texto = $"{paciente.Expediente} {paciente.Curp} {paciente.Nombre} {paciente.Apellido} {paciente.Sexo} {paciente.Direccion}";
         return texto.Contains(filtro, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -429,20 +742,10 @@ public partial class MenuPrincipalVista : Form
         };
         tarjeta.Controls.Add(curp);
 
-        Label telefono = new()
-        {
-            Text = $"Tel: {TextoSeguro(paciente.Telefono, "No registrado")}",
-            Location = new Point(24, 112),
-            Size = new Size(380, 24),
-            Font = new Font("Segoe UI", 10F),
-            ForeColor = Color.FromArgb(31, 41, 55)
-        };
-        tarjeta.Controls.Add(telefono);
-
         Label direccion = new()
         {
             Text = $"Direccion: {TextoSeguro(paciente.Direccion, "No registrada")}",
-            Location = new Point(24, 140),
+            Location = new Point(24, 112),
             Size = new Size(380, 24),
             Font = new Font("Segoe UI", 10F),
             ForeColor = Color.FromArgb(31, 41, 55)
@@ -675,10 +978,11 @@ public partial class MenuPrincipalVista : Form
         MostrarAdministracion();
     }
 
+    public bool CierreSesionSolicitado { get; private set; }
+
     private void BtnCerrarSesion_Click(object sender, EventArgs e)
     {
-        LoginVista login = new();
-        login.Show();
+        CierreSesionSolicitado = true;
         Close();
     }
 

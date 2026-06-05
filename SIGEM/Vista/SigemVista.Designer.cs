@@ -25,9 +25,6 @@ partial class SigemVista
     private DateTimePicker dtpFechaNacimiento;
     private Label lblSexo;
     private ComboBox cmbSexo;
-    private Label lblTelefono;
-    private TextBox txtTelefono;
-
     // Sección signos vitales
     private GroupBox grpSignosVitales;
     private Label lblPeso;
@@ -96,8 +93,6 @@ partial class SigemVista
         lblFechaNac = new Label();
         cmbSexo = new ComboBox();
         lblSexo = new Label();
-        txtTelefono = new TextBox();
-        lblTelefono = new Label();
         grpSignosVitales = new GroupBox();
         txtPeso = new TextBox();
         lblPeso = new Label();
@@ -222,8 +217,6 @@ partial class SigemVista
         grpPaciente.Controls.Add(lblFechaNac);
         grpPaciente.Controls.Add(cmbSexo);
         grpPaciente.Controls.Add(lblSexo);
-        grpPaciente.Controls.Add(txtTelefono);
-        grpPaciente.Controls.Add(lblTelefono);
         grpPaciente.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
         grpPaciente.Location = new Point(24, 128);
         grpPaciente.Name = "grpPaciente";
@@ -319,23 +312,6 @@ partial class SigemVista
         lblSexo.Name = "lblSexo";
         lblSexo.Size = new Size(35, 15);
         lblSexo.Text = "Sexo:";
-
-        // txtTelefono
-        txtTelefono.Font = new Font("Segoe UI", 9F);
-        txtTelefono.Location = new Point(570, 68);
-        txtTelefono.Name = "txtTelefono";
-        txtTelefono.PlaceholderText = "Teléfono";
-        txtTelefono.Size = new Size(180, 23);
-        txtTelefono.TabIndex = 5;
-        txtTelefono.Enabled = false;
-
-        // lblTelefono
-        lblTelefono.AutoSize = true;
-        lblTelefono.Font = new Font("Segoe UI", 9F);
-        lblTelefono.Location = new Point(508, 71);
-        lblTelefono.Name = "lblTelefono";
-        lblTelefono.Size = new Size(55, 15);
-        lblTelefono.Text = "Teléfono:";
 
         // grpSignosVitales
         grpSignosVitales.BackColor = Color.White;

@@ -152,7 +152,6 @@ public class SigemPresentador
             pacienteActual.Curp = vista.PacienteCurp;
             pacienteActual.FechaNacimiento = vista.PacienteFechaNacimiento;
             pacienteActual.Sexo = vista.PacienteSexo;
-            pacienteActual.Telefono = vista.PacienteTelefono;
             pacienteActual.SignosVitales.Add(sv);
             repositorio.GuardarPaciente(pacienteActual);
         }

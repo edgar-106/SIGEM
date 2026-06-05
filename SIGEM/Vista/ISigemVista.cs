@@ -17,7 +17,6 @@ public interface ISigemVista
     string PacienteApellido { get; set; }
     DateTime PacienteFechaNacimiento { get; set; }
     string PacienteSexo { get; set; }
-    string PacienteTelefono { get; set; }
     double Peso { get; }
     double Estatura { get; }
     double Temperatura { get; }

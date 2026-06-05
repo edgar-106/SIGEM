@@ -4,14 +4,6 @@ namespace SIGEM.Modelo;
 
 public class ServicioAutenticacion
 {
-<<<<<<< HEAD
-    private readonly List<Usuario> usuarios =
-[
-    new("admin", "admin123", "Dr. Admin", RolUsuario.Doctor),
-    new("enfermera", "enfermera123", "Enf. María López", RolUsuario.Enfermera),
-    new("administrador", "admin456", "Administrador SIGEM", RolUsuario.Administrador),
-];
-=======
     private readonly string rutaUsuarios;
     private readonly JsonSerializerOptions jsonOptions = new() { WriteIndented = true };
     private readonly ISigemRepositorio? repositorio;
@@ -28,7 +20,6 @@ public class ServicioAutenticacion
         rutaUsuarios = Path.Combine(carpetaIms, "usuarios.json");
         InicializarUsuarios();
     }
->>>>>>> 400b186b23d295f7e406d63117ed4bcacd901cd4
 
     public Usuario? Autenticar(string nombreUsuario, string contrasena)
     {

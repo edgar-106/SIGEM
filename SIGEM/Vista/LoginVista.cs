@@ -101,4 +101,9 @@ public partial class LoginVista : Form, ILoginVista
     {
 
     }
+
+    private void lblCredenciales_Click(object sender, EventArgs e)
+    {
+
+    }
 }
