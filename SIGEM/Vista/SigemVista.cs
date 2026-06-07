@@ -44,8 +44,6 @@ public partial class SigemVista : Form, ISigemVista
     public string PacienteSexo { get => cmbSexo.Text; set => cmbSexo.Text = value; }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public string PacienteTelefono { get => txtTelefono.Text.Trim(); set => txtTelefono.Text = value; }
-
     public double Peso => double.TryParse(txtPeso.Text, out var v) ? v : 0;
     public double Estatura => double.TryParse(txtEstatura.Text, out var v) ? v : 0;
     public double Temperatura => double.TryParse(txtTemperatura.Text, out var v) ? v : 0;
@@ -65,13 +63,10 @@ public partial class SigemVista : Form, ISigemVista
         RolActual = usuario.Rol;
         lblRolUsuario.Text = $"{usuario.NombreCompleto} ({usuario.Rol})";
 
-        // CAMBIO: Control dinámico de colores y textos según el rol
         if (usuario.Rol == RolUsuario.Doctor)
         {
             MostrarBotonValidar(true);
             btnGuardar.Text = "Guardar y Validar";
-
-            // Colores originales en azul para el Doctor
             pnlEncabezado.BackColor = Color.FromArgb(47, 124, 246);
             btnBuscar.BackColor = Color.FromArgb(47, 124, 246);
         }
@@ -79,8 +74,6 @@ public partial class SigemVista : Form, ISigemVista
         {
             MostrarBotonValidar(false);
             btnGuardar.Text = "Guardar (Borrador)";
-
-            // CAMBIO NUEVO: Cambia la barra de título y el botón Buscar a verde esmeralda para la Enfermera
             pnlEncabezado.BackColor = Color.FromArgb(16, 185, 129);
             btnBuscar.BackColor = Color.FromArgb(16, 185, 129);
         }
@@ -94,7 +87,6 @@ public partial class SigemVista : Form, ISigemVista
         txtPacienteApellido.Text = paciente.Apellido;
         dtpFechaNacimiento.Value = paciente.FechaNacimiento == default ? DateTime.Now.AddYears(-30) : paciente.FechaNacimiento;
         cmbSexo.Text = paciente.Sexo;
-        txtTelefono.Text = paciente.Telefono;
 
         if (paciente.SignosVitales.Count > 0)
         {
@@ -159,7 +151,6 @@ public partial class SigemVista : Form, ISigemVista
         txtPacienteApellido.Clear();
         dtpFechaNacimiento.Value = DateTime.Now.AddYears(-30);
         cmbSexo.SelectedIndex = -1;
-        txtTelefono.Clear();
         LimpiarCamposSignosVitales();
         lblValorIMC.Text = "--";
         lblValorPAM.Text = "--";
@@ -179,7 +170,6 @@ public partial class SigemVista : Form, ISigemVista
         txtPacienteApellido.Enabled = habilitar;
         dtpFechaNacimiento.Enabled = habilitar;
         cmbSexo.Enabled = habilitar;
-        txtTelefono.Enabled = habilitar;
     }
 
     public void HabilitarCamposSignosVitales(bool habilitar)

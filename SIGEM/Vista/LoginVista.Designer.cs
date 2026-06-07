@@ -31,6 +31,7 @@ partial class LoginVista
 
     private void InitializeComponent()
     {
+        Button btnIniciarSesion;
         pnlLateral = new Panel();
         lblDescripcion = new Label();
         lblSubtitulo = new Label();
@@ -150,6 +151,7 @@ partial class LoginVista
         lblCredenciales.Size = new Size(543, 159);
         lblCredenciales.TabIndex = 0;
         lblCredenciales.Text = "Credenciales IMS:\r\n\r\n👨‍⚕️ Doctor      →  Usuario: doctor      Contraseña: doctor123\r\n👩‍⚕️ Enfermera  →  Usuario: enfermera  Contraseña: enfermera123";
+        lblCredenciales.Click += lblCredenciales_Click;
         // 
         // btnIniciarSesion
         // 
