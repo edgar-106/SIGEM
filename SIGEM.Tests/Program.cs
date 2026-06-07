@@ -3,7 +3,6 @@ using Npgsql;
 
 ProbarPermisosRol();
 ProbarVisualizacionSignosVitales();
-ProbarGeneracionDocumentosClinicos();
 
 ConexionBD.CadenaConexion = "Host=localhost;Database=IMSS;Username=postgres;Password=postgres";
 string marcaPrueba = $"SIGEM_TEST_{Guid.NewGuid():N}";
@@ -158,54 +157,6 @@ void ProbarVisualizacionSignosVitales()
     Assert(alertas.Count >= 5, "Debe detectar varios signos fuera de rango.");
     Assert(alertas.Any(a => a.Campo == "Temperatura"), "Debe alertar temperatura alta.");
     Assert(alertas.Any(a => a.Campo == "Saturacion O2"), "Debe alertar saturacion baja.");
-}
-
-void ProbarGeneracionDocumentosClinicos()
-{
-    var paciente = new Paciente
-    {
-        Expediente = "EXP-PRUEBA",
-        Curp = "GARM900101HDFRRN01",
-        Nombre = "Miguel",
-        Apellido = "Garcia Rodriguez",
-        FechaNacimiento = new DateTime(1990, 1, 1),
-        Sexo = "Masculino",
-        SignosVitales =
-        [
-            new SignosVitales
-            {
-                FechaHora = new DateTime(2026, 6, 7, 10, 15, 0),
-                Peso = 72.5,
-                Estatura = 1.72,
-                Temperatura = 36.7,
-                Pulso = 78,
-                FrecuenciaRespiratoria = 18,
-                PresionSistolica = 120,
-                PresionDiastolica = 80,
-                CC = 94,
-                SaturacionO2 = 98,
-                RegistradoPor = "Enfermera SIGEM",
-                Validado = true,
-                ValidadoPor = "Doctor SIGEM"
-            }
-        ]
-    };
-
-    var usuario = new Usuario("doctor", string.Empty, "Doctor SIGEM", RolUsuario.Doctor);
-    string salida = Path.Combine(Path.GetTempPath(), "SIGEM_TEST_DOCS", Guid.NewGuid().ToString("N"));
-
-    var receta = GeneradorDocumentosClinicos.GenerarReceta(paciente, usuario, salida);
-    var nota = GeneradorDocumentosClinicos.GenerarNotaEvolucion(paciente, usuario, salida);
-    var historia = GeneradorDocumentosClinicos.GenerarHistoriaClinica(paciente, usuario, salida);
-
-    Assert(File.Exists(receta.RutaDocx), "Debe generar Word de receta.");
-    Assert(File.Exists(receta.RutaPdf), "Debe generar PDF de receta.");
-    Assert(File.Exists(nota.RutaDocx), "Debe generar Word de nota de evolucion.");
-    Assert(File.Exists(nota.RutaPdf), "Debe generar PDF de nota de evolucion.");
-    Assert(File.Exists(historia.RutaDocx), "Debe generar Word de historia clinica.");
-    Assert(File.Exists(historia.RutaPdf), "Debe generar PDF de historia clinica.");
-    Assert(new FileInfo(receta.RutaDocx).Length > 500, "El Word de receta no debe estar vacio.");
-    Assert(new FileInfo(receta.RutaPdf).Length > 500, "El PDF de receta no debe estar vacio.");
 }
 
 static void EliminarNotasDePrueba(int idPaciente, string marcaPrueba)

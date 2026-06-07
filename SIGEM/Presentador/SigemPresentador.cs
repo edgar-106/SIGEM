@@ -25,9 +25,6 @@ public class SigemPresentador
         this.vista.NuevoPacienteSolicitado += IniciarNuevoPaciente;
         this.vista.ValidarSolicitado += ValidarRegistro;
         this.vista.CalcularSolicitado += Calcular;
-        this.vista.GenerarRecetaSolicitado += GenerarReceta;
-        this.vista.GenerarNotaEvolucionSolicitado += GenerarNotaEvolucion;
-        this.vista.GenerarHistoriaClinicaSolicitado += GenerarHistoriaClinica;
     }
 
     private void BuscarPaciente(object? sender, EventArgs e)
@@ -321,69 +318,6 @@ public class SigemPresentador
         return string.Join(" | ", SignosVitalesVisualizacion
             .CrearFilas(signos, FormatoSignosVitales.HistoriaClinica)
             .Select(fila => $"{fila.Etiqueta}: {fila.Valor}"));
-    }
-
-    private void GenerarReceta(object? sender, EventArgs e)
-    {
-        if (pacienteActual is null)
-        {
-            vista.MostrarError("Debe buscar o guardar un paciente primero.");
-            return;
-        }
-
-        try
-        {
-            string carpetaBase = Path.Combine(AppContext.BaseDirectory, "Documentos");
-            var resultado = GeneradorDocumentosClinicos.GenerarReceta(pacienteActual, usuario, carpetaBase);
-            vista.MostrarMensaje($"Receta generada:\nDOCX: {resultado.RutaDocx}\nPDF: {resultado.RutaPdf}");
-            System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{resultado.RutaDocx}\"");
-        }
-        catch (Exception ex)
-        {
-            vista.MostrarError($"Error al generar receta: {ex.Message}");
-        }
-    }
-
-    private void GenerarNotaEvolucion(object? sender, EventArgs e)
-    {
-        if (pacienteActual is null)
-        {
-            vista.MostrarError("Debe buscar o guardar un paciente primero.");
-            return;
-        }
-
-        try
-        {
-            string carpetaBase = Path.Combine(AppContext.BaseDirectory, "Documentos");
-            var resultado = GeneradorDocumentosClinicos.GenerarNotaEvolucion(pacienteActual, usuario, carpetaBase);
-            vista.MostrarMensaje($"Nota de evolucion generada:\nDOCX: {resultado.RutaDocx}\nPDF: {resultado.RutaPdf}");
-            System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{resultado.RutaDocx}\"");
-        }
-        catch (Exception ex)
-        {
-            vista.MostrarError($"Error al generar nota de evolucion: {ex.Message}");
-        }
-    }
-
-    private void GenerarHistoriaClinica(object? sender, EventArgs e)
-    {
-        if (pacienteActual is null)
-        {
-            vista.MostrarError("Debe buscar o guardar un paciente primero.");
-            return;
-        }
-
-        try
-        {
-            string carpetaBase = Path.Combine(AppContext.BaseDirectory, "Documentos");
-            var resultado = GeneradorDocumentosClinicos.GenerarHistoriaClinica(pacienteActual, usuario, carpetaBase);
-            vista.MostrarMensaje($"Historia clinica generada:\nDOCX: {resultado.RutaDocx}\nPDF: {resultado.RutaPdf}");
-            System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{resultado.RutaDocx}\"");
-        }
-        catch (Exception ex)
-        {
-            vista.MostrarError($"Error al generar historia clinica: {ex.Message}");
-        }
     }
 
     private static bool EsCurp(string identificador)
