@@ -26,9 +26,7 @@
     <Compile Update="Vista\MenuPrincipalVista.Designer.cs">
       <DependentUpon>MenuPrincipalVista.cs</DependentUpon>
     </Compile>
-    <Compile Update="Vista\AdministracionControl.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
+    <Compile Update="Vista\AdministracionControl.cs" />
     <Compile Update="Vista\SigemVista.cs" />
     <Compile Update="Vista\SigemVista.Designer.cs">
       <DependentUpon>SigemVista.cs</DependentUpon>

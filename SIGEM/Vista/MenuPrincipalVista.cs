@@ -21,12 +21,10 @@ public partial class MenuPrincipalVista : Form
 
         VerificarPermisosPorRol();
 
-        MostrarPanelPrincipal();
-
-        btnAdministracion.Visible = usuario.Rol == RolUsuario.Administrador;
-        btnPacientes.Visible = usuario.Rol != RolUsuario.Administrador;
-        btnConsulta.Visible = usuario.Rol != RolUsuario.Administrador;
-        btnPanelPrincipal.Visible = usuario.Rol != RolUsuario.Administrador;
+        if (usuario.Rol == RolUsuario.Administrador)
+            MostrarAdministracion();
+        else
+            MostrarPanelPrincipal();
     }
 
     private void VerificarPermisosPorRol()
@@ -47,11 +45,26 @@ public partial class MenuPrincipalVista : Form
         else if (usuario.Rol == RolUsuario.Doctor)
         {
             btnPacientes.Visible = true;
-            btnAdministracion.Visible = true;
+            btnConsulta.Visible = true;
+            btnAdministracion.Visible = false;
 
             pnlMenu.BackColor = Color.White;
             btnPanelPrincipal.BackColor = Color.White;
             btnConsulta.BackColor = Color.White;
+            btnPacientes.BackColor = Color.White;
+            pnlMarca.BackColor = Color.FromArgb(47, 124, 246);
+        }
+        else if (usuario.Rol == RolUsuario.Administrador)
+        {
+            btnPacientes.Visible = false;
+            btnConsulta.Visible = false;
+            btnPanelPrincipal.Visible = true;
+            btnAdministracion.Visible = true;
+            btnAdministracion.Location = btnPacientes.Location;
+
+            pnlMenu.BackColor = Color.White;
+            btnPanelPrincipal.BackColor = Color.White;
+            btnAdministracion.BackColor = Color.White;
             pnlMarca.BackColor = Color.FromArgb(47, 124, 246);
         }
     }
@@ -75,7 +88,11 @@ public partial class MenuPrincipalVista : Form
 
     private void MostrarPanelPrincipal()
     {
-        MostrarContenido("Panel Principal", "Bienvenido al Sistema de Gestion Medica - SIGEM");
+        string subtitulo = usuario.Rol == RolUsuario.Administrador
+            ? "Vista de solo lectura — consulta estadisticas sin editar ni eliminar"
+            : "Bienvenido al Sistema de Gestion Medica - SIGEM";
+
+        MostrarContenido("Panel Principal", subtitulo);
         SeleccionarBoton(btnPanelPrincipal);
         ConstruirPanelPrincipal();
         CargarPanelPrincipal();
@@ -83,7 +100,7 @@ public partial class MenuPrincipalVista : Form
 
     private void MostrarGestionPacientes()
     {
-        if (usuario.Rol == RolUsuario.Enfermera) return;
+        if (usuario.Rol is RolUsuario.Enfermera or RolUsuario.Administrador) return;
 
         MostrarContenido("Gestion de Pacientes", "Administracion completa de expedientes medicos");
         SeleccionarBoton(btnPacientes);
@@ -92,6 +109,8 @@ public partial class MenuPrincipalVista : Form
 
     private void MostrarConsultaMedica()
     {
+        if (usuario.Rol == RolUsuario.Administrador) return;
+
         MostrarContenido("Consulta Medica", "Gestion de consultas, diagnosticos y tratamientos");
         SeleccionarBoton(btnConsulta);
         ConstruirConsultaMedica();
@@ -929,12 +948,13 @@ public partial class MenuPrincipalVista : Form
     {
         Button[] botones = [btnPanelPrincipal, btnPacientes, btnConsulta, btnAdministracion];
 
-        Color colorFondoPorRol = (usuario.Rol == RolUsuario.Enfermera)
+        Color colorFondoPorRol = usuario.Rol == RolUsuario.Enfermera
             ? Color.FromArgb(236, 253, 245)
             : Color.White;
 
         foreach (Button boton in botones)
         {
+            if (!boton.Visible) continue;
             boton.BackColor = colorFondoPorRol;
             boton.ForeColor = Color.FromArgb(31, 41, 55);
         }

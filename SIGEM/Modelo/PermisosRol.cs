@@ -18,6 +18,8 @@ public sealed class PermisosRol
     public bool PuedeVerHistoriaClinica => Rol is RolUsuario.Doctor or RolUsuario.Enfermera;
     public bool PuedeVerNotaEvolucion => Rol is RolUsuario.Doctor or RolUsuario.Enfermera;
     public bool PuedeAdministrarSistema => Rol is RolUsuario.Administrador;
+    public bool PuedeVerPanelPrincipal => Rol is RolUsuario.Doctor or RolUsuario.Enfermera or RolUsuario.Recepcionista or RolUsuario.Administrador;
+    public bool PanelPrincipalSoloLectura => Rol is RolUsuario.Administrador;
 
     public static PermisosRol Para(RolUsuario rol) => new(rol);
 }

@@ -4,6 +4,23 @@ using System.Diagnostics;
 
 namespace SIGEM.Modelo;
 
+public class UsuarioSistemaAdministracion
+{
+    public int IdUsuario { get; set; }
+    public string NombreUsuario { get; set; } = string.Empty;
+    public string NombreCompleto { get; set; } = string.Empty;
+    public string Correo { get; set; } = string.Empty;
+    public string Rol { get; set; } = string.Empty;
+    public bool Activo { get; set; }
+    public int? IdDoctor { get; set; }
+
+    public override string ToString()
+    {
+        string estado = Activo ? "Activo" : "Inactivo";
+        return $"{NombreUsuario} - {NombreCompleto} ({Rol}, {estado})";
+    }
+}
+
 public class DatosAdministrador
 {
     public string NombreCompleto { get; set; } = string.Empty;
@@ -21,8 +38,184 @@ public class ConfiguracionSistema
 public class ServicioAdministracionSistema
 {
     public ServicioAdministracionSistema()
+
     {
         InicializarEstructura();
+    }
+        public List<UsuarioSistemaAdministracion> ObtenerUsuariosSistema()
+    {
+        var usuarios = new List<UsuarioSistemaAdministracion>();
+
+        using var conexion = ConexionBD.CrearConexion();
+        conexion.Open();
+
+        using var cmd = new NpgsqlCommand(
+            "SELECT id_usuario, nombre_usuario, nombre_completo, COALESCE(correo, '') AS correo, rol, activo, id_doctor " +
+            "FROM usuarios " +
+            "ORDER BY id_usuario", conexion);
+
+        using var reader = cmd.ExecuteReader();
+
+        while (reader.Read())
+        {
+            usuarios.Add(new UsuarioSistemaAdministracion
+            {
+                IdUsuario = Convert.ToInt32(reader["id_usuario"]),
+                NombreUsuario = LeerTexto(reader, "nombre_usuario"),
+                NombreCompleto = LeerTexto(reader, "nombre_completo"),
+                Correo = LeerTexto(reader, "correo"),
+                Rol = LeerTexto(reader, "rol"),
+                Activo = reader["activo"] is bool activo && activo,
+                IdDoctor = reader["id_doctor"] == DBNull.Value ? null : Convert.ToInt32(reader["id_doctor"])
+            });
+        }
+
+        return usuarios;
+    }
+
+    public List<UsuarioSistemaAdministracion> ObtenerUsuariosPorRol(string rolFiltro)
+    {
+        string rolNormalizado = NormalizarRolInterno(rolFiltro);
+
+        return ObtenerUsuariosSistema()
+            .Where(usuario => NormalizarRolInterno(usuario.Rol) == rolNormalizado)
+            .ToList();
+    }
+
+    public bool ActualizarUsuarioSistema(
+        int idUsuario,
+        string nombreUsuario,
+        string nombreCompleto,
+        string correo,
+        string rol,
+        bool activo)
+    {
+        using var conexion = ConexionBD.CrearConexion();
+        conexion.Open();
+
+        using var tx = conexion.BeginTransaction();
+
+        using var buscar = new NpgsqlCommand(
+            "SELECT id_doctor FROM usuarios WHERE id_usuario = @id", conexion, tx);
+        buscar.Parameters.AddWithValue("@id", idUsuario);
+
+        object? idDoctorObj = buscar.ExecuteScalar();
+        int? idDoctor = idDoctorObj is null || idDoctorObj == DBNull.Value
+            ? null
+            : Convert.ToInt32(idDoctorObj);
+
+        using var cmd = new NpgsqlCommand(
+            "UPDATE usuarios " +
+            "SET nombre_usuario = @usuario, nombre_completo = @nombre, correo = @correo, rol = @rol, activo = @activo " +
+            "WHERE id_usuario = @id", conexion, tx);
+
+        cmd.Parameters.AddWithValue("@id", idUsuario);
+        cmd.Parameters.AddWithValue("@usuario", nombreUsuario.Trim());
+        cmd.Parameters.AddWithValue("@nombre", nombreCompleto.Trim());
+        cmd.Parameters.AddWithValue("@correo", correo.Trim());
+        cmd.Parameters.AddWithValue("@rol", rol.Trim());
+        cmd.Parameters.AddWithValue("@activo", activo);
+
+        int actualizados = cmd.ExecuteNonQuery();
+
+        if (idDoctor is not null)
+        {
+            using var doctor = new NpgsqlCommand(
+                "UPDATE doctores SET usuario = @usuario WHERE id_doctor = @idDoctor",
+                conexion,
+                tx);
+
+            doctor.Parameters.AddWithValue("@usuario", nombreUsuario.Trim());
+            doctor.Parameters.AddWithValue("@idDoctor", idDoctor.Value);
+            doctor.ExecuteNonQuery();
+        }
+
+        tx.Commit();
+
+        return actualizados > 0;
+    }
+
+    public bool EliminarUsuarioSistema(int idUsuario)
+    {
+        using var conexion = ConexionBD.CrearConexion();
+        conexion.Open();
+
+        using var tx = conexion.BeginTransaction();
+
+        using var buscar = new NpgsqlCommand(
+            "SELECT id_doctor FROM usuarios WHERE id_usuario = @id", conexion, tx);
+        buscar.Parameters.AddWithValue("@id", idUsuario);
+
+        object? idDoctorObj = buscar.ExecuteScalar();
+        int? idDoctor = idDoctorObj is null || idDoctorObj == DBNull.Value
+            ? null
+            : Convert.ToInt32(idDoctorObj);
+
+        using var cmd = new NpgsqlCommand(
+            "DELETE FROM usuarios WHERE id_usuario = @id", conexion, tx);
+        cmd.Parameters.AddWithValue("@id", idUsuario);
+
+        int eliminados = cmd.ExecuteNonQuery();
+
+        if (eliminados > 0 && idDoctor is not null)
+        {
+            using var doctor = new NpgsqlCommand(
+                "UPDATE doctores SET usuario = NULL, contrasena = NULL WHERE id_doctor = @idDoctor",
+                conexion,
+                tx);
+
+            doctor.Parameters.AddWithValue("@idDoctor", idDoctor.Value);
+            doctor.ExecuteNonQuery();
+        }
+
+        tx.Commit();
+
+        return eliminados > 0;
+    }
+
+    public bool CambiarContrasenaUsuarioSistema(
+        int idUsuario,
+        string nuevaContrasena)
+    {
+        using var conexion = ConexionBD.CrearConexion();
+        conexion.Open();
+
+        using var tx = conexion.BeginTransaction();
+
+        using var buscar = new NpgsqlCommand(
+            "SELECT id_doctor FROM usuarios WHERE id_usuario = @id", conexion, tx);
+        buscar.Parameters.AddWithValue("@id", idUsuario);
+
+        object? idDoctorObj = buscar.ExecuteScalar();
+        int? idDoctor = idDoctorObj is null || idDoctorObj == DBNull.Value
+            ? null
+            : Convert.ToInt32(idDoctorObj);
+
+        using var cmd = new NpgsqlCommand(
+            "UPDATE usuarios " +
+            "SET contrasena = @contrasena " +
+            "WHERE id_usuario = @id", conexion, tx);
+
+        cmd.Parameters.AddWithValue("@id", idUsuario);
+        cmd.Parameters.AddWithValue("@contrasena", nuevaContrasena);
+
+        int actualizados = cmd.ExecuteNonQuery();
+
+        if (idDoctor is not null)
+        {
+            using var doctor = new NpgsqlCommand(
+                "UPDATE doctores SET contrasena = @contrasena WHERE id_doctor = @idDoctor",
+                conexion,
+                tx);
+
+            doctor.Parameters.AddWithValue("@contrasena", nuevaContrasena);
+            doctor.Parameters.AddWithValue("@idDoctor", idDoctor.Value);
+            doctor.ExecuteNonQuery();
+        }
+
+        tx.Commit();
+
+        return actualizados > 0;
     }
 
     private void InicializarEstructura()
@@ -287,5 +480,22 @@ public class ServicioAdministracionSistema
     {
         object valor = reader[columna];
         return valor is null || valor == DBNull.Value ? string.Empty : Convert.ToString(valor)?.Trim() ?? string.Empty;
+    }
+
+    private static string NormalizarRolInterno(string rol)
+    {
+        if (string.IsNullOrWhiteSpace(rol))
+            return string.Empty;
+
+        string valor = rol.Trim().ToLowerInvariant();
+
+        return valor switch
+        {
+            "admin" or "administrador" => "administrador",
+            "doctor" or "medico" or "médico" => "doctor",
+            "enfermera" or "enfermero" => "enfermera",
+            "recepcion" or "recepción" or "recepcionista" => "recepcionista",
+            _ => valor
+        };
     }
 }
