@@ -1,9 +1,13 @@
 ﻿using System.Drawing.Drawing2D;
+using SIGEM.Modelo;
 
 namespace SIGEM.Vista;
 
 public class AdministracionControl : UserControl
 {
+    private readonly Usuario usuarioActual;
+    private readonly ServicioAdministracionSistema servicioAdministracion;
+
     private Panel pnlScroll = null!;
     private Label lblTitulo = null!, lblSubtitulo = null!;
 
@@ -28,9 +32,13 @@ public class AdministracionControl : UserControl
     private Label lblUltimoRespaldo = null!, lblTamanoBD = null!;
     private Button btnCrearRespaldo = null!, btnRestaurar = null!, btnLimpiar = null!;
 
-    public AdministracionControl()
+    public AdministracionControl(Usuario usuarioActual)
     {
+        this.usuarioActual = usuarioActual ?? throw new ArgumentNullException(nameof(usuarioActual));
+        servicioAdministracion = new ServicioAdministracionSistema();
+
         InitControls();
+        CargarDatosIniciales();
     }
 
     private void InitControls()
@@ -217,9 +225,10 @@ public class AdministracionControl : UserControl
 
     private void ConstruirInfoAdmin()
     {
-        pnlInfoAdmin.Controls.Add(CrearTituloCard("👤  Información del Administrador"));
+        pnlInfoAdmin.Controls.Add(CrearTituloCard("Información del Administrador"));
 
         int y = 60;
+
         pnlInfoAdmin.Controls.Add(CrearLabel("Nombre Completo", 24, y));
         y += 22;
         txtNombre = CrearTextBox(24, y, 322, "Dr. Admin");
@@ -238,10 +247,45 @@ public class AdministracionControl : UserControl
         pnlInfoAdmin.Controls.Add(txtTelefono);
 
         y += 52;
-        btnGuardarInfo = CrearBoton("💾  Guardar Cambios", Color.FromArgb(37, 99, 235), 24, y, 322);
+
+        btnGuardarInfo = CrearBoton("Guardar Cambios", Color.FromArgb(37, 99, 235), 24, y, 322);
         btnGuardarInfo.Click += (s, e) =>
-            MessageBox.Show("Información guardada correctamente.", "SIGEM",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        {
+            if (string.IsNullOrWhiteSpace(txtNombre.Text))
+            {
+                MessageBox.Show("Ingresa el nombre completo del administrador.", "SIGEM",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                bool guardado = servicioAdministracion.GuardarDatosAdministrador(
+                    usuarioActual,
+                    txtNombre.Text,
+                    txtCorreo.Text,
+                    txtTelefono.Text
+                );
+
+                if (!guardado)
+                {
+                    MessageBox.Show("No se encontró el usuario administrador para actualizar.", "SIGEM",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                usuarioActual.NombreCompleto = txtNombre.Text.Trim();
+
+                MessageBox.Show("Información del administrador guardada correctamente.", "SIGEM",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al guardar la información.\n\nDetalle: {ex.Message}", "SIGEM",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        };
+
         pnlInfoAdmin.Controls.Add(btnGuardarInfo);
     }
 
@@ -273,21 +317,59 @@ public class AdministracionControl : UserControl
         {
             if (string.IsNullOrWhiteSpace(txtPassActual.Text))
             {
-                MessageBox.Show("Ingresa la contraseña actual.", "Error",
+                MessageBox.Show("Ingresa la contraseña actual.", "SIGEM",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+
+            if (string.IsNullOrWhiteSpace(txtPassNueva.Text))
+            {
+                MessageBox.Show("Ingresa la nueva contraseña.", "SIGEM",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (txtPassNueva.Text.Length < 6)
+            {
+                MessageBox.Show("La nueva contraseña debe tener al menos 6 caracteres.", "SIGEM",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             if (txtPassNueva.Text != txtPassConfirm.Text)
             {
-                MessageBox.Show("Las contraseñas no coinciden.", "Error",
+                MessageBox.Show("Las contraseñas no coinciden.", "SIGEM",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            MessageBox.Show("Contraseña actualizada correctamente.", "SIGEM",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
-            txtPassActual.Clear();
-            txtPassNueva.Clear();
-            txtPassConfirm.Clear();
+
+            try
+            {
+                bool actualizada = servicioAdministracion.CambiarContrasena(
+                    usuarioActual,
+                    txtPassActual.Text,
+                    txtPassNueva.Text
+                );
+
+                if (!actualizada)
+                {
+                    MessageBox.Show("La contraseña actual es incorrecta.", "SIGEM",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                MessageBox.Show("Contraseña actualizada correctamente.", "SIGEM",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                txtPassActual.Clear();
+                txtPassNueva.Clear();
+                txtPassConfirm.Clear();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al actualizar la contraseña.\n\nDetalle: {ex.Message}", "SIGEM",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         };
         pnlPassword.Controls.Add(btnActualizarPass);
     }
@@ -361,8 +443,38 @@ public class AdministracionControl : UserControl
         y += 48;
         btnGuardarConfig = CrearBoton("💾  Guardar Configuración", Color.FromArgb(37, 99, 235), 24, y, 322);
         btnGuardarConfig.Click += (s, e) =>
-            MessageBox.Show("Configuración guardada correctamente.", "SIGEM",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        {
+            try
+            {
+                int minutos = 30;
+
+                if (cmbTiempoSesion.SelectedItem is not null)
+                {
+                    string texto = cmbTiempoSesion.SelectedItem.ToString() ?? "30 minutos";
+                    string numero = texto.Split(' ')[0];
+
+                    if (!int.TryParse(numero, out minutos))
+                        minutos = 30;
+                }
+
+                var config = new ConfiguracionSistema
+                {
+                    Notificaciones = chkNotificaciones.Checked,
+                    RespaldoAutomatico = chkRespaldoAuto.Checked,
+                    TiempoSesionMinutos = minutos
+                };
+
+                servicioAdministracion.GuardarConfiguracion(config);
+
+                MessageBox.Show("Configuración guardada correctamente.", "SIGEM",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al guardar la configuración.\n\nDetalle: {ex.Message}", "SIGEM",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        };
         pnlConfigGeneral.Controls.Add(btnGuardarConfig);
     }
 
@@ -404,11 +516,21 @@ public class AdministracionControl : UserControl
         btnCrearRespaldo = CrearBoton("Crear Respaldo Manual", Color.FromArgb(22, 163, 74), 24, y, 322);
         btnCrearRespaldo.Click += (s, e) =>
         {
-            CrearRespaldoIms();
-            lblUltimoRespaldo.Text = $"Último respaldo IMS: {DateTime.Now:dd/MM/yyyy - hh:mm tt}";
-            lblTamanoBD.Text = $"Tamaño de base de datos: {ObtenerTamanoBaseDatos()}";
-            MessageBox.Show("Respaldo creado correctamente.", "SIGEM",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            try
+            {
+                string archivo = servicioAdministracion.CrearRespaldoPostgres();
+
+                lblUltimoRespaldo.Text = $"Último respaldo: {DateTime.Now:dd/MM/yyyy - hh:mm tt}";
+                lblTamanoBD.Text = $"Tamaño de base de datos: {servicioAdministracion.ObtenerTamanoBaseDatos()}";
+
+                MessageBox.Show($"Respaldo creado correctamente.\n\nArchivo:\n{archivo}", "SIGEM",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"No se pudo crear el respaldo.\n\nDetalle: {ex.Message}", "SIGEM",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         };
         pnlBaseDatos.Controls.Add(btnCrearRespaldo);
 
@@ -416,10 +538,39 @@ public class AdministracionControl : UserControl
         btnRestaurar = CrearBoton("Restaurar desde Respaldo", Color.FromArgb(217, 119, 6), 24, y, 322);
         btnRestaurar.Click += (s, e) =>
         {
-            if (MessageBox.Show("¿Restaurar desde el último respaldo?", "Confirmar",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
-                MessageBox.Show("Base de datos restaurada.", "SIGEM",
+            using OpenFileDialog dialogo = new()
+            {
+                Title = "Seleccionar respaldo SQL",
+                Filter = "Archivos SQL (*.sql)|*.sql",
+                InitialDirectory = Path.Combine(AppContext.BaseDirectory, "Datos", "ims", "respaldos")
+            };
+
+            if (dialogo.ShowDialog() != DialogResult.OK)
+                return;
+
+            if (MessageBox.Show(
+                "¿Seguro que deseas restaurar este respaldo?\n\nEsta acción puede sobrescribir información actual.",
+                "Confirmar restauración",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning) != DialogResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                servicioAdministracion.RestaurarRespaldoPostgres(dialogo.FileName);
+
+                lblTamanoBD.Text = $"Tamaño de base de datos: {servicioAdministracion.ObtenerTamanoBaseDatos()}";
+
+                MessageBox.Show("Base de datos restaurada correctamente.", "SIGEM",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"No se pudo restaurar el respaldo.\n\nDetalle: {ex.Message}", "SIGEM",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         };
         pnlBaseDatos.Controls.Add(btnRestaurar);
 
@@ -427,10 +578,29 @@ public class AdministracionControl : UserControl
         btnLimpiar = CrearBoton("Limpiar Datos Antiguos", Color.FromArgb(220, 38, 38), 24, y, 322);
         btnLimpiar.Click += (s, e) =>
         {
-            if (MessageBox.Show("¿Eliminar datos antiguos? Esta acción no se puede deshacer.", "Confirmar",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
-                MessageBox.Show("Datos eliminados correctamente.", "SIGEM",
+            if (MessageBox.Show(
+                "¿Eliminar notas de evolución con más de 1 año de antigüedad?\n\nEsta acción no se puede deshacer.",
+                "Confirmar limpieza",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning) != DialogResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                int eliminados = servicioAdministracion.LimpiarDatosAntiguos(365);
+
+                lblTamanoBD.Text = $"Tamaño de base de datos: {servicioAdministracion.ObtenerTamanoBaseDatos()}";
+
+                MessageBox.Show($"Limpieza completada.\nRegistros eliminados: {eliminados}", "SIGEM",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"No se pudieron limpiar los datos antiguos.\n\nDetalle: {ex.Message}", "SIGEM",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         };
         pnlBaseDatos.Controls.Add(btnLimpiar);
     }
@@ -462,5 +632,48 @@ public class AdministracionControl : UserControl
         Directory.CreateDirectory(carpetaRespaldos);
         string respaldo = Path.Combine(carpetaRespaldos, $"pacientes_{DateTime.Now:yyyyMMdd_HHmmss}.json");
         File.Copy(ruta, respaldo, overwrite: true);
+    }
+    private void CargarDatosIniciales()
+    {
+        try
+        {
+            var datosAdmin = servicioAdministracion.ObtenerDatosAdministrador(usuarioActual);
+
+            txtNombre.Text = string.IsNullOrWhiteSpace(datosAdmin.NombreCompleto)
+                ? usuarioActual.NombreCompleto
+                : datosAdmin.NombreCompleto;
+
+            txtCorreo.Text = string.IsNullOrWhiteSpace(datosAdmin.Correo)
+                ? "admin@sigem.com"
+                : datosAdmin.Correo;
+
+            txtTelefono.Text = string.IsNullOrWhiteSpace(datosAdmin.Telefono)
+                ? "+52 55 0000 0000"
+                : datosAdmin.Telefono;
+
+            var config = servicioAdministracion.ObtenerConfiguracion();
+
+            chkNotificaciones.Checked = config.Notificaciones;
+            chkRespaldoAuto.Checked = config.RespaldoAutomatico;
+
+            string tiempo = $"{config.TiempoSesionMinutos} minutos";
+
+            if (cmbTiempoSesion.Items.Contains(tiempo))
+                cmbTiempoSesion.SelectedItem = tiempo;
+            else
+                cmbTiempoSesion.SelectedIndex = 1;
+
+            lblUltimoRespaldo.Text = "Base de datos PostgreSQL: IMSS";
+            lblTamanoBD.Text = $"Tamaño de base de datos: {servicioAdministracion.ObtenerTamanoBaseDatos()}";
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"No se pudieron cargar los datos de administración.\n\nDetalle: {ex.Message}",
+                "SIGEM",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+            );
+        }
     }
 }

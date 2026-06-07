@@ -4,10 +4,7 @@ public enum RolUsuario
 {
     Doctor,
     Enfermera,
-<<<<<<< HEAD
-=======
     Recepcionista,
->>>>>>> 72ebf2f66146c87d41c2f3c53b88dd92a5dfe847
     Administrador
 }
 

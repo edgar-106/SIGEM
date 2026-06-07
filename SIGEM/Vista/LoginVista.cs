@@ -11,6 +11,7 @@ public partial class LoginVista : Form, ILoginVista
     public LoginVista()
     {
         InitializeComponent();
+
         var repo = ConexionBD.CrearRepositorio();
         presentador = new LoginPresentador(this, new ServicioAutenticacion(repo));
     }
@@ -30,17 +31,12 @@ public partial class LoginVista : Form, ILoginVista
     public void AbrirMenuPrincipal(Usuario usuario)
     {
         MenuPrincipalVista menuPrincipal = new(usuario);
+
         menuPrincipal.FormClosed += (_, _) =>
         {
-            if (menuPrincipal.CierreSesionSolicitado)
-            {
-                PrepararNuevoInicioSesion();
-                Show();
-                return;
-            }
-
             Close();
         };
+
         Hide();
         menuPrincipal.Show();
     }

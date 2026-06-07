@@ -6,22 +6,23 @@ namespace SIGEM.Vista;
 public partial class MenuPrincipalVista : Form
 {
     private readonly Usuario usuario;
-    private readonly ISigemRepositorio repositorio = new SigemRepositorioJson();
+    private readonly ISigemRepositorio repositorio;
     private Form? formularioEmbebido;
     private string subSeccionConsulta = "Nueva Consulta";
 
     public MenuPrincipalVista(Usuario usuario)
     {
         this.usuario = usuario;
+        repositorio = ConexionBD.CrearRepositorio();
+
         InitializeComponent();
+
         lblUsuario.Text = $"Usuario: {usuario.NombreCompleto} ({ObtenerRolTexto(usuario.Rol)})";
 
-        // Evaluar los permisos del rol antes de mostrar cualquier pantalla
         VerificarPermisosPorRol();
 
         MostrarPanelPrincipal();
-        // Solo el administrador ve el botón
-        btnAdministracion.Visible = usuario.Rol == RolUsuario.Administrador;
+
         btnAdministracion.Visible = usuario.Rol == RolUsuario.Administrador;
         btnPacientes.Visible = usuario.Rol != RolUsuario.Administrador;
         btnConsulta.Visible = usuario.Rol != RolUsuario.Administrador;
@@ -106,11 +107,12 @@ public partial class MenuPrincipalVista : Form
 
     private void MostrarAdministracion()
     {
-        if (usuario.Rol == RolUsuario.Enfermera) return;
+        if (usuario.Rol != RolUsuario.Administrador) return;
 
         LimpiarContenido();
         SeleccionarBoton(btnAdministracion);
-        var adminControl = new AdministracionControl();
+
+        var adminControl = new AdministracionControl(usuario);
         pnlContenido.Controls.Add(adminControl);
     }
 
@@ -365,7 +367,7 @@ public partial class MenuPrincipalVista : Form
 
     private void ConstruirAdministracion()
     {
-        AdministracionControl administracionControl = new()
+        AdministracionControl administracionControl = new(usuario)
         {
             Dock = DockStyle.Fill
         };
