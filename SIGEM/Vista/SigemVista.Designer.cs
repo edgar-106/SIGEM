@@ -59,6 +59,11 @@ partial class SigemVista
     private Button btnLimpiar;
     private Button btnValidar;
 
+    // Botones documentos
+    private Button btnReceta;
+    private Button btnNotaEvolucion;
+    private Button btnHistoriaClinica;
+
     // Historial
     private Label lblHistorial;
     private ListBox lstHistorial;
@@ -121,6 +126,9 @@ partial class SigemVista
         btnGuardar = new Button();
         btnLimpiar = new Button();
         btnValidar = new Button();
+        btnReceta = new Button();
+        btnNotaEvolucion = new Button();
+        btnHistoriaClinica = new Button();
         lblHistorial = new Label();
         lstHistorial = new ListBox();
         lblEstado = new Label();
@@ -604,10 +612,55 @@ partial class SigemVista
         btnValidar.Visible = false;
         btnValidar.Click += BtnValidar_Click;
 
+        // btnReceta
+        btnReceta.BackColor = Color.FromArgb(124, 58, 237);
+        btnReceta.FlatAppearance.BorderSize = 0;
+        btnReceta.FlatStyle = FlatStyle.Flat;
+        btnReceta.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        btnReceta.ForeColor = Color.White;
+        btnReceta.Location = new Point(24, 556);
+        btnReceta.Name = "btnReceta";
+        btnReceta.Size = new Size(190, 34);
+        btnReceta.TabIndex = 10;
+        btnReceta.Text = "Generar Receta";
+        btnReceta.UseVisualStyleBackColor = false;
+        btnReceta.Visible = false;
+        btnReceta.Click += BtnReceta_Click;
+
+        // btnNotaEvolucion
+        btnNotaEvolucion.BackColor = Color.FromArgb(217, 119, 6);
+        btnNotaEvolucion.FlatAppearance.BorderSize = 0;
+        btnNotaEvolucion.FlatStyle = FlatStyle.Flat;
+        btnNotaEvolucion.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        btnNotaEvolucion.ForeColor = Color.White;
+        btnNotaEvolucion.Location = new Point(224, 556);
+        btnNotaEvolucion.Name = "btnNotaEvolucion";
+        btnNotaEvolucion.Size = new Size(200, 34);
+        btnNotaEvolucion.TabIndex = 11;
+        btnNotaEvolucion.Text = "Generar Nota Evolucion";
+        btnNotaEvolucion.UseVisualStyleBackColor = false;
+        btnNotaEvolucion.Visible = false;
+        btnNotaEvolucion.Click += BtnNotaEvolucion_Click;
+
+        // btnHistoriaClinica
+        btnHistoriaClinica.BackColor = Color.FromArgb(220, 38, 38);
+        btnHistoriaClinica.FlatAppearance.BorderSize = 0;
+        btnHistoriaClinica.FlatStyle = FlatStyle.Flat;
+        btnHistoriaClinica.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        btnHistoriaClinica.ForeColor = Color.White;
+        btnHistoriaClinica.Location = new Point(434, 556);
+        btnHistoriaClinica.Name = "btnHistoriaClinica";
+        btnHistoriaClinica.Size = new Size(210, 34);
+        btnHistoriaClinica.TabIndex = 12;
+        btnHistoriaClinica.Text = "Generar Historial Clinico";
+        btnHistoriaClinica.UseVisualStyleBackColor = false;
+        btnHistoriaClinica.Visible = false;
+        btnHistoriaClinica.Click += BtnHistoriaClinica_Click;
+
         // lblHistorial
         lblHistorial.AutoSize = true;
         lblHistorial.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-        lblHistorial.Location = new Point(24, 560);
+        lblHistorial.Location = new Point(24, 604);
         lblHistorial.Name = "lblHistorial";
         lblHistorial.Size = new Size(166, 19);
         lblHistorial.Text = "Historial de Registros";
@@ -616,15 +669,15 @@ partial class SigemVista
         lstHistorial.Font = new Font("Segoe UI", 9F);
         lstHistorial.FormattingEnabled = true;
         lstHistorial.ItemHeight = 15;
-        lstHistorial.Location = new Point(24, 585);
+        lstHistorial.Location = new Point(24, 628);
         lstHistorial.Name = "lstHistorial";
-        lstHistorial.Size = new Size(832, 94);
+        lstHistorial.Size = new Size(832, 79);
         lstHistorial.TabIndex = 9;
 
         // lblEstado
         lblEstado.AutoSize = true;
         lblEstado.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        lblEstado.Location = new Point(24, 690);
+        lblEstado.Location = new Point(24, 720);
         lblEstado.Name = "lblEstado";
         lblEstado.Size = new Size(0, 15);
         lblEstado.Text = string.Empty;
@@ -633,10 +686,13 @@ partial class SigemVista
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.FromArgb(239, 246, 255);
-        ClientSize = new Size(880, 720);
+        ClientSize = new Size(880, 760);
         Controls.Add(lblEstado);
         Controls.Add(lstHistorial);
         Controls.Add(lblHistorial);
+        Controls.Add(btnHistoriaClinica);
+        Controls.Add(btnNotaEvolucion);
+        Controls.Add(btnReceta);
         Controls.Add(btnValidar);
         Controls.Add(btnLimpiar);
         Controls.Add(btnGuardar);
