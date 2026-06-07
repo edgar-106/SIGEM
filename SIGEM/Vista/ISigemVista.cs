@@ -10,6 +10,9 @@ public interface ISigemVista
     event EventHandler? NuevoPacienteSolicitado;
     event EventHandler? ValidarSolicitado;
     event EventHandler? CalcularSolicitado;
+    event EventHandler? GenerarRecetaSolicitado;
+    event EventHandler? GenerarNotaEvolucionSolicitado;
+    event EventHandler? GenerarHistoriaClinicaSolicitado;
 
     string Expediente { get; }
     string PacienteCurp { get; set; }
@@ -39,6 +42,7 @@ public interface ISigemVista
     void HabilitarCamposPaciente(bool habilitar);
     void HabilitarCamposSignosVitales(bool habilitar);
     void MostrarBotonValidar(bool visible);
+    void MostrarBotonesDocumentos(bool visible);
     void EstablecerModoNuevoPaciente();
     void SetUsuario(Usuario usuario);
 }
