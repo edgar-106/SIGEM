@@ -1,4 +1,5 @@
-﻿using SIGEM.Modelo;
+﻿using System.IO;
+using SIGEM.Modelo;
 using SIGEM.Vista;
 
 namespace SIGEM.Presentador;
@@ -25,6 +26,9 @@ public class SigemPresentador
         this.vista.NuevoPacienteSolicitado += IniciarNuevoPaciente;
         this.vista.ValidarSolicitado += ValidarRegistro;
         this.vista.CalcularSolicitado += Calcular;
+        this.vista.RecetaSolicitado += (_, _) => GenerarDocumento("Receta");
+        this.vista.NotaEvolucionSolicitado += (_, _) => GenerarDocumento("NotaEvolucion");
+        this.vista.HistoriaClinicaSolicitado += (_, _) => GenerarDocumento("HistoriaClinica");
     }
 
     private void BuscarPaciente(object? sender, EventArgs e)
@@ -55,6 +59,7 @@ public class SigemPresentador
         vista.MostrarPaciente(paciente);
         vista.MostrarMensaje($"Paciente encontrado: {paciente.Nombre} {paciente.Apellido}");
 
+        vista.MostrarDocumentos(usuario.Rol == RolUsuario.Doctor);
         ActualizarHistorial(paciente);
         MostrarAlertasDelUltimoRegistro(paciente);
 
@@ -329,5 +334,45 @@ public class SigemPresentador
     {
         string sufijo = curp.Length >= 4 ? curp[^4..] : curp;
         return $"EXP-{DateTime.Now:yyyyMMddHHmmss}-{sufijo}".ToUpperInvariant();
+    }
+
+    private void GenerarDocumento(string tipo)
+    {
+        if (pacienteActual is null)
+        {
+            vista.MostrarError("Debe buscar o crear un paciente primero.");
+            return;
+        }
+
+        string carpeta = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            "SIGEM", "Documentos");
+
+        string formato = vista.FormatoDocumento;
+        bool generarPdf = formato is "PDF" or "PDF + DOCX";
+        bool generarDocx = formato is "DOCX" or "PDF + DOCX";
+
+        try
+        {
+            DocumentoClinicoGenerado resultado = tipo switch
+            {
+                "Receta" => GeneradorDocumentosClinicos.GenerarReceta(pacienteActual, usuario, carpeta),
+                "NotaEvolucion" => GeneradorDocumentosClinicos.GenerarNotaEvolucion(pacienteActual, usuario, carpeta),
+                "HistoriaClinica" => GeneradorDocumentosClinicos.GenerarHistoriaClinica(pacienteActual, usuario, carpeta),
+                _ => throw new ArgumentException($"Tipo de documento desconocido: {tipo}")
+            };
+
+            var generados = new List<string>();
+            if (generarDocx) { generados.Add(resultado.RutaDocx); }
+            if (generarPdf) { generados.Add(resultado.RutaPdf); }
+
+            string mensaje = "Documentos generados:\n" + string.Join("\n", generados.Select(r => $"  - {r}"));
+            vista.MostrarMensaje($"Documento(s) generado(s) correctamente.");
+            MessageBox.Show(mensaje, "SIGEM - Documentos", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (Exception ex)
+        {
+            vista.MostrarError($"Error al generar {tipo}: {ex.Message}");
+        }
     }
 }

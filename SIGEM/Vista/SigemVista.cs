@@ -25,6 +25,9 @@ public partial class SigemVista : Form, ISigemVista
     public event EventHandler? NuevoPacienteSolicitado;
     public event EventHandler? ValidarSolicitado;
     public event EventHandler? CalcularSolicitado;
+    public event EventHandler? RecetaSolicitado;
+    public event EventHandler? NotaEvolucionSolicitado;
+    public event EventHandler? HistoriaClinicaSolicitado;
 
     public string Expediente => txtExpediente.Text.Trim();
 
@@ -56,6 +59,7 @@ public partial class SigemVista : Form, ISigemVista
 
     public string UsuarioActual { get; private set; } = string.Empty;
     public RolUsuario RolActual { get; private set; }
+    public string FormatoDocumento => cmbFormatoDocumento.SelectedItem?.ToString() ?? "PDF";
 
     public void SetUsuario(Usuario usuario)
     {
@@ -160,6 +164,7 @@ public partial class SigemVista : Form, ISigemVista
         HabilitarCamposPaciente(false);
         HabilitarCamposSignosVitales(false);
         MostrarBotonValidar(RolActual == RolUsuario.Doctor);
+        MostrarDocumentos(false);
         txtExpediente.Focus();
     }
 
@@ -189,6 +194,11 @@ public partial class SigemVista : Form, ISigemVista
     public void MostrarBotonValidar(bool visible)
     {
         btnValidar.Visible = visible;
+    }
+
+    public void MostrarDocumentos(bool visible)
+    {
+        grpDocumentos.Visible = visible;
     }
 
     public void EstablecerModoNuevoPaciente()
@@ -242,6 +252,21 @@ public partial class SigemVista : Form, ISigemVista
     private void BtnValidar_Click(object sender, EventArgs e)
     {
         ValidarSolicitado?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void BtnReceta_Click(object sender, EventArgs e)
+    {
+        RecetaSolicitado?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void BtnNotaEvolucion_Click(object sender, EventArgs e)
+    {
+        NotaEvolucionSolicitado?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void BtnHistorial_Click(object sender, EventArgs e)
+    {
+        HistoriaClinicaSolicitado?.Invoke(this, EventArgs.Empty);
     }
 
     private void TxtExpediente_KeyDown(object sender, KeyEventArgs e)

@@ -34,7 +34,8 @@ public partial class LoginVista : Form, ILoginVista
 
         menuPrincipal.FormClosed += (_, _) =>
         {
-            Close();
+            Show();
+            PrepararNuevoInicioSesion();
         };
 
         Hide();

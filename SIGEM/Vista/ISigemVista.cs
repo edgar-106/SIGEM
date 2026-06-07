@@ -28,6 +28,11 @@ public interface ISigemVista
     double SaturacionO2 { get; }
     string UsuarioActual { get; }
     RolUsuario RolActual { get; }
+    string FormatoDocumento { get; }
+
+    event EventHandler? RecetaSolicitado;
+    event EventHandler? NotaEvolucionSolicitado;
+    event EventHandler? HistoriaClinicaSolicitado;
 
     void MostrarPaciente(Paciente paciente);
     void MostrarCalculos(double imc, double pam);
@@ -39,6 +44,7 @@ public interface ISigemVista
     void HabilitarCamposPaciente(bool habilitar);
     void HabilitarCamposSignosVitales(bool habilitar);
     void MostrarBotonValidar(bool visible);
+    void MostrarDocumentos(bool visible);
     void EstablecerModoNuevoPaciente();
     void SetUsuario(Usuario usuario);
 }
