@@ -55,6 +55,23 @@ partial class LoginVista
         pnlUsuarioBorder.SuspendLayout();
         SuspendLayout();
         // 
+        // btnIniciarSesion
+        // 
+        btnIniciarSesion.BackColor = Color.FromArgb(37, 99, 235);
+        btnIniciarSesion.Cursor = Cursors.Hand;
+        btnIniciarSesion.FlatAppearance.BorderSize = 0;
+        btnIniciarSesion.FlatStyle = FlatStyle.Flat;
+        btnIniciarSesion.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+        btnIniciarSesion.ForeColor = Color.White;
+        btnIniciarSesion.Location = new Point(69, 567);
+        btnIniciarSesion.Margin = new Padding(3, 4, 3, 4);
+        btnIniciarSesion.Name = "btnIniciarSesion";
+        btnIniciarSesion.Size = new Size(582, 67);
+        btnIniciarSesion.TabIndex = 7;
+        btnIniciarSesion.Text = "Iniciar Sesión";
+        btnIniciarSesion.UseVisualStyleBackColor = false;
+        btnIniciarSesion.Click += BtnIniciarSesion_Click;
+        // 
         // pnlLateral
         // 
         pnlLateral.BackColor = Color.FromArgb(30, 58, 138);
@@ -99,6 +116,7 @@ partial class LoginVista
         lblMarca.Size = new Size(220, 81);
         lblMarca.TabIndex = 2;
         lblMarca.Text = "SIGEM";
+        lblMarca.Click += lblMarca_Click;
         // 
         // pnlTarjeta
         // 
@@ -152,23 +170,6 @@ partial class LoginVista
         lblCredenciales.TabIndex = 0;
         lblCredenciales.Text = "Credenciales IMS:\r\n\r\n👨‍⚕️ Doctor      →  Usuario: doctor      Contraseña: doctor123\r\n👩‍⚕️ Enfermera  →  Usuario: enfermera  Contraseña: enfermera123";
         lblCredenciales.Click += lblCredenciales_Click;
-        // 
-        // btnIniciarSesion
-        // 
-        btnIniciarSesion.BackColor = Color.FromArgb(37, 99, 235);
-        btnIniciarSesion.Cursor = Cursors.Hand;
-        btnIniciarSesion.FlatAppearance.BorderSize = 0;
-        btnIniciarSesion.FlatStyle = FlatStyle.Flat;
-        btnIniciarSesion.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
-        btnIniciarSesion.ForeColor = Color.White;
-        btnIniciarSesion.Location = new Point(69, 567);
-        btnIniciarSesion.Margin = new Padding(3, 4, 3, 4);
-        btnIniciarSesion.Name = "btnIniciarSesion";
-        btnIniciarSesion.Size = new Size(582, 67);
-        btnIniciarSesion.TabIndex = 7;
-        btnIniciarSesion.Text = "Iniciar Sesión";
-        btnIniciarSesion.UseVisualStyleBackColor = false;
-        btnIniciarSesion.Click += BtnIniciarSesion_Click;
         // 
         // pnlContrasenaBorder
         // 

@@ -219,6 +219,9 @@ public class SigemRepositorioPostgres : ISigemRepositorio
         return ObtenerTodos().Where(p => p.EsBorrador).ToList();
     }
 
+    public void GuardarDiagnostico(string identificador, string diagnostico) { }
+    public void GuardarTratamiento(string identificador, string tratamiento) { }
+
     public bool EliminarPaciente(string identificador)
     {
         if (string.IsNullOrWhiteSpace(identificador)) return false;

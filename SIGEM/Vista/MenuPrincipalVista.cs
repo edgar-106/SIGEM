@@ -172,10 +172,7 @@ public partial class MenuPrincipalVista : Form
     private void ConstruirGestionPacientes()
     {
         FlowLayoutPanel tabs = CrearTabs(200, [
-            ("Registros", true),
-            ("Buscar Expediente", false),
-            ("Historial Clinico", false),
-            ("Agregar Evolucion", false)
+            ("Registros", true)
         ]);
         pnlContenido.Controls.Add(tabs);
 
@@ -252,17 +249,9 @@ public partial class MenuPrincipalVista : Form
 
         switch (subSeccionConsulta)
         {
-            case "Receta Medica":
-                ConstruirMensajeSimple("Emitir Receta Medica", "Esta funcionalidad se encuentra en la seccion de gestion de pacientes. Selecciona un paciente para emitir una receta medica.", 330);
-                break;
-            case "Diagnostico":
-                if (usuario.Rol == RolUsuario.Doctor) ConstruirFormularioDiagnostico();
-                else SeleccionarConsulta("Nueva Consulta");
-                break;
-            case "Tratamiento":
-                if (usuario.Rol == RolUsuario.Doctor) ConstruirFormularioTratamiento();
-                else SeleccionarConsulta("Nueva Consulta");
-                break;
+            
+            
+         
             default:
                 ConstruirNuevaConsulta();
                 break;
@@ -301,7 +290,7 @@ public partial class MenuPrincipalVista : Form
             };
             boton.FlatAppearance.BorderSize = 0;
 
-            if (texto is "Nueva Consulta" or "Receta Medica" or "Diagnostico" or "Tratamiento")
+            if (texto is "Nueva Consulta")
             {
                 boton.Click += (_, _) => SeleccionarConsulta(texto);
             }

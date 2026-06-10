@@ -12,5 +12,7 @@ public interface ISigemRepositorio
     void ValidarRegistro(string expediente, int indiceSignoVital, string validadoPor);
     List<Paciente> ObtenerBorradores();
     bool EliminarPaciente(string identificador);
+    void GuardarDiagnostico(string identificador, string diagnostico);
+    void GuardarTratamiento(string identificador, string tratamiento);
     Usuario? AutenticarUsuario(string nombreUsuario, string contrasena);
 }

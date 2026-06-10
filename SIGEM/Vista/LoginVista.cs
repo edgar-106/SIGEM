@@ -103,4 +103,9 @@ public partial class LoginVista : Form, ILoginVista
     {
 
     }
+
+    private void lblMarca_Click(object sender, EventArgs e)
+    {
+
+    }
 }

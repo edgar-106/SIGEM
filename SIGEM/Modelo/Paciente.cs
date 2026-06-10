@@ -16,4 +16,6 @@ public class Paciente
     public bool EsBorrador { get; set; }
     public DateTime FechaRegistro { get; set; }
     public List<SignosVitales> SignosVitales { get; set; } = new List<SignosVitales>();
+    public string Diagnostico { get; set; } = string.Empty;
+    public string Tratamiento { get; set; } = string.Empty;
 }

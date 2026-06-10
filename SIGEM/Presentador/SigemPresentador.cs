@@ -336,6 +336,15 @@ public class SigemPresentador
         return $"EXP-{DateTime.Now:yyyyMMddHHmmss}-{sufijo}".ToUpperInvariant();
     }
 
+    private DocumentoClinicoGenerado GenerarRecetaConDialogo(Paciente paciente, Usuario usuario, string carpeta)
+    {
+        using var dialog = new RecetaDialog();
+        if (dialog.ShowDialog() == DialogResult.OK)
+            return GeneradorDocumentosClinicos.GenerarReceta(paciente, usuario, carpeta, dialog.Diagnostico, dialog.Tratamiento);
+        else
+            throw new OperationCanceledException("El usuario canceló la generación de la receta.");
+    }
+
     private void GenerarDocumento(string tipo)
     {
         if (pacienteActual is null)
@@ -356,7 +365,7 @@ public class SigemPresentador
         {
             DocumentoClinicoGenerado resultado = tipo switch
             {
-                "Receta" => GeneradorDocumentosClinicos.GenerarReceta(pacienteActual, usuario, carpeta),
+                "Receta" => GenerarRecetaConDialogo(pacienteActual, usuario, carpeta),
                 "NotaEvolucion" => GeneradorDocumentosClinicos.GenerarNotaEvolucion(pacienteActual, usuario, carpeta),
                 "HistoriaClinica" => GeneradorDocumentosClinicos.GenerarHistoriaClinica(pacienteActual, usuario, carpeta),
                 _ => throw new ArgumentException($"Tipo de documento desconocido: {tipo}")
@@ -369,6 +378,9 @@ public class SigemPresentador
             string mensaje = "Documentos generados:\n" + string.Join("\n", generados.Select(r => $"  - {r}"));
             vista.MostrarMensaje($"Documento(s) generado(s) correctamente.");
             MessageBox.Show(mensaje, "SIGEM - Documentos", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (OperationCanceledException)
+        {
         }
         catch (Exception ex)
         {

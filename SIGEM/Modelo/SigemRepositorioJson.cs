@@ -146,6 +146,34 @@ public class SigemRepositorioJson : ISigemRepositorio
         return eliminados > 0;
     }
 
+    public void GuardarDiagnostico(string identificador, string diagnostico)
+    {
+        var pacientes = CargarPacientes();
+        var idx = pacientes.FindIndex(p =>
+            string.Equals(p.Expediente, identificador, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(p.Curp, identificador, StringComparison.OrdinalIgnoreCase));
+
+        if (idx >= 0)
+        {
+            pacientes[idx].Diagnostico = diagnostico;
+            GuardarPacientes(pacientes);
+        }
+    }
+
+    public void GuardarTratamiento(string identificador, string tratamiento)
+    {
+        var pacientes = CargarPacientes();
+        var idx = pacientes.FindIndex(p =>
+            string.Equals(p.Expediente, identificador, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(p.Curp, identificador, StringComparison.OrdinalIgnoreCase));
+
+        if (idx >= 0)
+        {
+            pacientes[idx].Tratamiento = tratamiento;
+            GuardarPacientes(pacientes);
+        }
+    }
+
     private List<Paciente> CargarPacientes()
     {
         if (!File.Exists(rutaArchivo))
